@@ -131,5 +131,6 @@ export const birthdayConfig = {
     subtitle: "A single ₹10 note, split in half",
     description: "One half stays with me, and the other is with you. A quiet promise that no matter the distance, we are always connected.",
     message: "Srividya, this isn't just a piece of paper; it's a shared secret. We split this ₹10 note to make a quiet promise: no matter where life takes us, or how far apart we might be, we each carry a piece of the exact same story. Hold onto your half (Serial No. 02D 648892). Because whenever you do, remember that you are holding onto a piece of my world. We are, and always will be, two halves of the same whole.",
+    promise: "Some bonds are worth more than any currency. Ours is one of them."
   }
 } as const;
