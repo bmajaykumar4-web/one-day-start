@@ -18,7 +18,7 @@ export const birthdayConfig = {
     { date: "The Day We Met", caption: "I didn't know it yet, but my life had just changed.", image: "/photos/memory_20.jpg" },
     { date: "Our First Date", caption: "I couldn't stop smiling for days afterward.", image: "/photos/memory_12.jpg" },
     { date: "That Late-Night Drive", caption: "Windows down, your laugh louder than the music.", image: "/photos/memory_33.jpg" },
-    { date: "The Little Things", caption: "From late-night talks to standard texts that always made me smile.", image: "/photos/memory_21.jpg" },
+    { date: "The Little Things", caption: "From late-night talks to standard texts that always made me smile.", image: "/videos/video_143.mp4" },
     { date: "The Quiet Sunday", caption: "Coffee, your head on my shoulder. Heaven.", image: "/photos/memory_27.jpg" },
     { date: "Our First Trip", caption: "Every photo had you smiling. Every memory does too.", image: "/photos/memory_31.jpg" },
     { date: "Today", caption: "And every day after this one. I promise.", image: "/photos/memory_18.jpg" },

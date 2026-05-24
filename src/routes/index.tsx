@@ -759,12 +759,23 @@ function SceneTimeline() {
                   style={{ rotate: left ? "-2deg" : "2deg" }}
                 >
                   <div className="aspect-square w-full overflow-hidden rounded-sm bg-neutral-100 relative group/img">
-                    <img
-                      src={m.image}
-                      alt={m.date}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110"
-                    />
+                    {m.image.endsWith(".mp4") ? (
+                      <video
+                        src={m.image}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110"
+                      />
+                    ) : (
+                      <img
+                        src={m.image}
+                        alt={m.date}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <Heart className="h-8 w-8 text-white/80 animate-pulse" />
                     </div>
