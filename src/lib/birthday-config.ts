@@ -119,8 +119,15 @@ export const birthdayConfig = {
     { type: "photo", url: "/photos/memory_31.jpg" },
     { type: "photo", url: "/photos/memory_32.jpg" },
     { type: "photo", url: "/photos/memory_33.jpg" },
-    { type: "photo", url: "/photos/memory_34.jpg" }
-
+    { type: "photo", url: "/photos/memory_34.jpg" },
+    { type: "photo", url: "/photos/Screenshot (74).png" },
+    { type: "photo", url: "/photos/Screenshot (89).png" },
+    { type: "photo", url: "/photos/Screenshot (95).png" },
+    { type: "photo", url: "/photos/Screenshot (112).png" },
+    { type: "photo", url: "/photos/Screenshot (114).png" },
+    { type: "photo", url: "/photos/Screenshot (117).png" },
+    { type: "photo", url: "/photos/Screenshot (123).png" },
+    { type: "photo", url: "/photos/Screenshot (126).png" }
   ],
   tenRupeeNote: {
     serialNumber: "02D 648892",
