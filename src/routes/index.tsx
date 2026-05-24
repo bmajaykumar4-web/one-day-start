@@ -123,7 +123,7 @@ function BirthdayPage() {
   useEffect(() => {
     if (!opened) return;
 
-    const sceneIds = ["welcome", "letter", "effort", "timeline", "archive", "soundtrack", "gift", "promise", "finale", "gallery"];
+    const sceneIds = ["welcome", "letter", "effort", "timeline", "archive", "soundtrack", "gift", "promise", "you-and-me", "finale", "gallery"];
     const sceneToSongMap: Record<string, number> = {
       welcome: 0,
       letter: 1,
@@ -133,6 +133,7 @@ function BirthdayPage() {
       soundtrack: 1,
       gift: 0,
       promise: 0,
+      "you-and-me": 0,
       finale: 1,
       gallery: 2,
     };
@@ -254,6 +255,7 @@ function BirthdayPage() {
                 />
                 <SceneGift />
                 <SceneNote />
+                <SceneYouAndMe />
                 <SceneFinale />
                 <SceneGallery onVideoPlayStateChange={setIsVideoPlaying} />
               </motion.div>
@@ -1220,6 +1222,151 @@ function SceneNote() {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+
+/* ===================== Scene 6.3: You & Me ===================== */
+function SceneYouAndMe() {
+  const [isUnited, setIsUnited] = useState(false);
+
+  const handleUnite = () => {
+    setIsUnited(!isUnited);
+    if (!isUnited) {
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.65 },
+        colors: ["#E8C87A", "#FFD700", "#FFC0CB", "#FFF"],
+      });
+    }
+  };
+
+  return (
+    <section
+      id="you-and-me"
+      className="relative overflow-hidden py-32 flex flex-col items-center"
+      style={{
+        background: "linear-gradient(180deg, oklch(0.12 0.01 320) 0%, oklch(0.22 0.05 340) 100%)",
+      }}
+    >
+      <Stars count={40} />
+      <div className="mx-auto max-w-4xl px-6 text-center relative z-10 flex flex-col items-center w-full">
+        <p className="font-hand text-2xl text-[color:var(--gold)]">Two Halves of One Whole</p>
+        <h3 className="mt-2 font-display text-5xl text-[color:var(--ivory)] md:text-6xl">
+          {birthdayConfig.youAndMe.title}
+        </h3>
+        <p className="mt-4 font-serif-soft text-lg text-[color:var(--ivory)]/70 max-w-xl mx-auto">
+          {birthdayConfig.youAndMe.subtitle}
+        </p>
+        <div className="gold-divider mx-auto mt-6 w-32" />
+
+        {/* You & Me Interactive Merge Card */}
+        <div className="relative mt-16 flex flex-col items-center justify-center min-h-[300px] w-full max-w-2xl px-4">
+          <div className="relative w-full flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-12 select-none overflow-hidden py-6">
+            
+            {/* United Card (Morph in when isUnited) */}
+            <motion.div
+              initial={false}
+              animate={{
+                opacity: isUnited ? 1 : 0,
+                scale: isUnited ? 1 : 0.9,
+                y: isUnited ? 0 : 20,
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="absolute inset-0 w-full h-full flex items-center justify-center p-4 z-20 pointer-events-none"
+              style={{ display: isUnited ? "flex" : "none" }}
+            >
+              <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-[color:var(--gold)]/30 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center">
+                <Sparkles className="h-8 w-8 text-[color:var(--gold)] mb-4 animate-bounce" />
+                <h4 className="font-display text-3xl text-[color:var(--gold)]">Together</h4>
+                <p className="mt-4 font-serif-soft text-lg sm:text-xl italic text-[color:var(--ivory)] leading-relaxed">
+                  "{birthdayConfig.youAndMe.unitedMessage}"
+                </p>
+                <div className="mt-6 flex items-center gap-2 text-[color:var(--gold)] font-hand text-2xl">
+                  <span>Srividya</span>
+                  <Heart className="h-5 w-5 fill-current animate-pulse text-[color:var(--rose)]" />
+                  <span>Ajaykumar</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Srividya (You) Card */}
+            <motion.div
+              initial={false}
+              animate={{
+                x: isUnited ? "50%" : "0%",
+                opacity: isUnited ? 0 : 1,
+                scale: isUnited ? 0.9 : 1,
+              }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+              className="w-full md:w-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 flex flex-col items-center shadow-lg text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-[color:var(--rose)]/20 border border-[color:var(--rose)]/30 flex items-center justify-center mb-4">
+                <Sparkles className="h-6 w-6 text-[color:var(--rose)]" />
+              </div>
+              <h4 className="font-display text-2xl text-[color:var(--rose)]">Srividya (You)</h4>
+              <p className="mt-2 text-xs uppercase tracking-widest text-[color:var(--ivory)]/50">Your beautiful traits</p>
+              <ul className="mt-4 space-y-2 w-full text-left">
+                {birthdayConfig.youAndMe.youTraits.map((trait, index) => (
+                  <li key={index} className="flex items-center gap-3 text-sm text-[color:var(--ivory)]/90 font-serif-soft">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--rose)]" />
+                    {trait}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Ajaykumar (Me) Card */}
+            <motion.div
+              initial={false}
+              animate={{
+                x: isUnited ? "-50%" : "0%",
+                opacity: isUnited ? 0 : 1,
+                scale: isUnited ? 0.9 : 1,
+              }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+              className="w-full md:w-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 flex flex-col items-center shadow-lg text-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-[color:var(--gold)]/20 border border-[color:var(--gold)]/30 flex items-center justify-center mb-4">
+                <Heart className="h-6 w-6 text-[color:var(--gold)]" />
+              </div>
+              <h4 className="font-display text-2xl text-[color:var(--gold)]">Ajaykumar (Me)</h4>
+              <p className="mt-2 text-xs uppercase tracking-widest text-[color:var(--ivory)]/50">My quiet promise</p>
+              <ul className="mt-4 space-y-2 w-full text-left">
+                {birthdayConfig.youAndMe.meTraits.map((trait, index) => (
+                  <li key={index} className="flex items-center gap-3 text-sm text-[color:var(--ivory)]/90 font-serif-soft">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--gold)]" />
+                    {trait}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Unite Cue Button (Only visible when split) */}
+            <motion.div
+              animate={{
+                opacity: isUnited ? 0 : 1,
+                scale: isUnited ? 0.8 : 1,
+              }}
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center justify-center cursor-pointer"
+              onClick={handleUnite}
+            >
+              <div className="rounded-full bg-[color:var(--gold)]/20 backdrop-blur-md p-4 border border-[color:var(--gold)]/40 shadow-lg animate-pulse hover:scale-110 transition-transform">
+                <Heart className="h-8 w-8 text-[color:var(--gold)] fill-current" />
+              </div>
+              <span className="mt-2 text-xs uppercase tracking-widest text-[color:var(--gold)]/80 font-semibold bg-black/40 px-3 py-1 rounded-full border border-[color:var(--gold)]/20">
+                Unite Us
+              </span>
+            </motion.div>
+          </div>
+        </div>
+
+        <p className="mt-6 text-sm uppercase tracking-widest text-[color:var(--gold)]/70 cursor-pointer hover:text-[color:var(--gold)] transition-colors" onClick={handleUnite}>
+          {isUnited ? "Tap to split back to you & me" : "Tap to unite us together"}
+        </p>
       </div>
     </section>
   );

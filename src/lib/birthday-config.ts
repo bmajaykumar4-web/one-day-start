@@ -18,6 +18,7 @@ export const birthdayConfig = {
     { date: "The Day We Met", caption: "I didn't know it yet, but my life had just changed.", image: "/photos/memory_20.jpg" },
     { date: "Our First Date", caption: "I couldn't stop smiling for days afterward.", image: "/photos/memory_12.jpg" },
     { date: "That Late-Night Drive", caption: "Windows down, your laugh louder than the music.", image: "/photos/memory_33.jpg" },
+    { date: "The Little Things", caption: "From late-night talks to standard texts that always made me smile.", image: "/photos/memory_21.jpg" },
     { date: "The Quiet Sunday", caption: "Coffee, your head on my shoulder. Heaven.", image: "/photos/memory_27.jpg" },
     { date: "Our First Trip", caption: "Every photo had you smiling. Every memory does too.", image: "/photos/memory_31.jpg" },
     { date: "Today", caption: "And every day after this one. I promise.", image: "/photos/memory_18.jpg" },
@@ -131,5 +132,12 @@ export const birthdayConfig = {
     description: "One half stays with me, and the other is with you. A quiet promise that no matter the distance, we are always connected.",
     message: "Srividya, this isn't just a piece of paper; it's a shared secret. We split this ₹10 note to make a quiet promise: no matter where life takes us, or how far apart we might be, we each carry a piece of the exact same story. Hold onto your half (Serial No. 02D 648892). Because whenever you do, remember that you are holding onto a piece of my world. We are, and always will be, two halves of the same whole.",
     promise: "Some bonds are worth more than any currency. Ours is one of them."
+  },
+  youAndMe: {
+    title: "You & Me",
+    subtitle: "Two completely different individuals, making one perfect team.",
+    youTraits: ["Incredibly Resilient", "Pure & Empathetic", "Chaotically Funny", "Constant source of light"],
+    meTraits: ["Calm & Grounded", "Quietly Supportive", "Website Developer", "Always there to listen"],
+    unitedMessage: "We might be different in so many ways. You bring the spark, I bring the calm. You bring the energy, I bring the support. But together, we complement each other perfectly to make our own little world."
   }
 } as const;
