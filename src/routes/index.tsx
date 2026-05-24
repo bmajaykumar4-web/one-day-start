@@ -1643,7 +1643,7 @@ function GalleryVideoCard({ src }: { src: string }) {
   }, [src, activeSrc]);
 
   return (
-    <div className="relative w-full aspect-[9/16] max-h-[300px] overflow-hidden flex items-center justify-center bg-black">
+    <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black">
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
           <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -1672,6 +1672,32 @@ interface SceneGalleryProps {
 
 function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
   const [active, setActive] = useState<number | null>(null);
+  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    birthdayConfig.galleryItems.forEach((item) => {
+      if (item.type === "photo") {
+        const img = new Image();
+        img.src = item.url;
+        img.onload = () => {
+          setAspectRatios((prev) => ({
+            ...prev,
+            [item.url]: img.naturalWidth / img.naturalHeight,
+          }));
+        };
+      } else {
+        const vid = document.createElement("video");
+        vid.src = item.url;
+        vid.preload = "metadata";
+        vid.onloadedmetadata = () => {
+          setAspectRatios((prev) => ({
+            ...prev,
+            [item.url]: vid.videoWidth / vid.videoHeight,
+          }));
+        };
+      }
+    });
+  }, []);
 
   const handleClose = () => {
     setActive(null);
@@ -1694,9 +1720,20 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
         </p>
       </div>
 
-      <div className="mx-auto mt-16 max-w-6xl columns-2 gap-4 px-6 md:columns-3 lg:columns-4">
+      <div className="mx-auto mt-16 max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-6 grid-flow-row-dense auto-rows-[180px] md:auto-rows-[220px]">
         {birthdayConfig.galleryItems.map((item, i) => {
           const isItemVideo = item.type === "video";
+          const ar = aspectRatios[item.url];
+          
+          let spanClass = "col-span-1 row-span-1"; // default standard block
+          if (ar) {
+            if (ar < 0.8) {
+              spanClass = "col-span-1 row-span-2"; // Portrait (tall) building block
+            } else if (ar > 1.35) {
+              spanClass = "col-span-2 row-span-1"; // Landscape (wide) building block
+            }
+          }
+
           return (
             <motion.button
               key={i}
@@ -1705,9 +1742,9 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: (i % 4) * 0.05 }}
               onClick={() => setActive(i)}
-              className="group mb-4 block w-full overflow-hidden rounded-xl border border-[color:var(--gold)]/10 bg-white/20 p-2 backdrop-blur hover:border-[color:var(--rose)]/40 transition-all duration-300 hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] cursor-pointer"
+              className={`group overflow-hidden rounded-xl border border-[color:var(--gold)]/10 bg-white/20 p-2 backdrop-blur hover:border-[color:var(--rose)]/40 transition-all duration-300 hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] cursor-pointer flex flex-col items-stretch justify-stretch ${spanClass}`}
             >
-              <div className="relative overflow-hidden rounded-lg bg-black/5">
+              <div className="relative overflow-hidden rounded-lg bg-black/5 w-full h-full flex flex-col justify-stretch items-stretch">
                 {isItemVideo ? (
                   <GalleryVideoCard src={item.url} />
                 ) : (
@@ -1715,7 +1752,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
                     src={item.url}
                     alt={`Memory photo ${i + 1}`}
                     loading="lazy"
-                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 )}
                 
