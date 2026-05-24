@@ -1548,26 +1548,39 @@ function SceneFinale() {
             style={{ filter: "drop-shadow(0 20px 30px rgba(232,200,122,.35))" }}
           />
           {/* clickable candle hot-spots */}
-          <div className="absolute inset-0 flex items-start justify-center gap-[10%] pt-[8%]">
-            {candles.map((lit, i) => (
-              <button
-                key={i}
-                onClick={() => lit && blow(i)}
-                aria-label={`Blow out candle ${i + 1}`}
-                className="relative h-[22%] w-[14%]"
-              >
-                {lit && (
-                  <span
-                    className="candle-flame absolute left-1/2 top-0 h-6 w-3 -translate-x-1/2 rounded-full"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 50% 60%, #fff7c2 0%, #ffd24c 50%, #ff7a3a 100%)",
-                      boxShadow: "0 0 18px #ffb84d, 0 0 36px #ff7a3a",
-                    }}
-                  />
-                )}
-              </button>
-            ))}
+          <div className="absolute inset-0 pointer-events-none">
+            {candles.map((lit, i) => {
+              const positions = [
+                { left: "37.5%", top: "27%", rotate: "-15deg" },
+                { left: "50%", top: "22%", rotate: "0deg" },
+                { left: "62.5%", top: "27%", rotate: "15deg" },
+              ];
+              const pos = positions[i];
+              return (
+                <button
+                  key={i}
+                  onClick={() => lit && blow(i)}
+                  aria-label={`Blow out candle ${i + 1}`}
+                  className="absolute w-[16%] h-[16%] flex items-center justify-center cursor-pointer pointer-events-auto"
+                  style={{
+                    left: pos.left,
+                    top: pos.top,
+                    transform: `translate(-50%, -50%) rotate(${pos.rotate})`,
+                  }}
+                >
+                  {lit && (
+                    <span
+                      className="candle-flame block h-7 w-3.5 rounded-full"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 50% 60%, #fff7c2 0%, #ffd24c 50%, #ff7a3a 100%)",
+                        boxShadow: "0 0 18px #ffb84d, 0 0 36px #ff7a3a",
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
