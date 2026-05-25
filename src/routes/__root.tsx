@@ -73,15 +73,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Happy Birthday Sri" },
-      { name: "description", content: "Build your web application in a single day with this starter kit." },
+      {
+        name: "description",
+        content: "Build your web application in a single day with this starter kit.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Happy Birthday Sri" },
-      { property: "og:description", content: "Build your web application in a single day with this starter kit." },
+      {
+        property: "og:description",
+        content: "Build your web application in a single day with this starter kit.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Happy Birthday Sri" },
-      { name: "twitter:description", content: "Build your web application in a single day with this starter kit." },
+      {
+        name: "twitter:description",
+        content: "Build your web application in a single day with this starter kit.",
+      },
     ],
     links: [
       {

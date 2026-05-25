@@ -2,7 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Heart, Sparkles, Gift, ChevronDown, Mail, MailOpen, X, Play, Pause, Volume2, VolumeX, Music } from "lucide-react";
+import {
+  Heart,
+  Sparkles,
+  Gift,
+  ChevronDown,
+  Mail,
+  MailOpen,
+  X,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Music,
+  SkipForward,
+} from "lucide-react";
 import { birthdayConfig } from "@/lib/birthday-config";
 import { Petals, Stars } from "@/components/Petals";
 import petalsBg from "@/assets/petals-bg.jpg";
@@ -37,27 +51,7 @@ function BirthdayPage() {
   const [activeSection, setActiveSection] = useState("welcome");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
-  // Centralized Audio Loader & playback coordinator
-  useEffect(() => {
-    if (bgAudioRef.current) {
-      bgAudioRef.current.load();
-      if (isPlaying && activeSection !== "soundtrack") {
-        bgAudioRef.current.play()
-          .catch((err) => console.log("Background audio play blocked on switch:", err));
-      }
-    }
-  }, [currentBgSongIndex]);
-
-  useEffect(() => {
-    if (cassetteAudioRef.current) {
-      cassetteAudioRef.current.load();
-      if (isPlaying && activeSection === "soundtrack" && isPlayingCassette) {
-        cassetteAudioRef.current.play()
-          .catch((err) => console.log("Cassette audio play blocked on switch:", err));
-      }
-    }
-  }, [currentCassetteIndex]);
-
+  // Centralized Audio coordinator
   useEffect(() => {
     if (!bgAudioRef.current || !cassetteAudioRef.current) return;
 
@@ -71,21 +65,40 @@ function BirthdayPage() {
       if (activeSection === "soundtrack") {
         bgAudioRef.current.pause();
         if (isPlayingCassette) {
-          cassetteAudioRef.current.play()
+          cassetteAudioRef.current
+            .play()
             .catch((err) => console.log("Cassette audio play blocked:", err));
         } else {
           cassetteAudioRef.current.pause();
         }
       } else {
         cassetteAudioRef.current.pause();
-        bgAudioRef.current.play()
+        bgAudioRef.current
+          .play()
           .catch((err) => console.log("Background audio play blocked:", err));
       }
     }
   }, [isPlaying, isMuted, activeSection, isPlayingCassette, isVideoPlaying]);
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying);
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+    if (nextPlaying) {
+      if (activeSection === "soundtrack") {
+        if (isPlayingCassette && cassetteAudioRef.current) {
+          cassetteAudioRef.current
+            .play()
+            .catch((err) => console.log("Cassette play blocked on toggle:", err));
+        }
+      } else {
+        if (bgAudioRef.current) {
+          bgAudioRef.current.play().catch((err) => console.log("BG play blocked on toggle:", err));
+        }
+      }
+    } else {
+      if (bgAudioRef.current) bgAudioRef.current.pause();
+      if (cassetteAudioRef.current) cassetteAudioRef.current.pause();
+    }
   };
 
   const toggleMute = () => {
@@ -96,8 +109,50 @@ function BirthdayPage() {
     setOpened(true);
     setIsPlaying(true);
     if (bgAudioRef.current) {
-      bgAudioRef.current.play()
-        .catch((err) => console.log("Audio play blocked by browser:", err));
+      bgAudioRef.current.play().catch((err) => console.log("Audio play blocked by browser:", err));
+    }
+  };
+
+  const handleNextTrack = () => {
+    if (activeSection === "soundtrack") {
+      const nextIdx = (currentCassetteIndex + 1) % birthdayConfig.music.cassetteSongs.length;
+      setCurrentCassetteIndex(nextIdx);
+      setIsPlayingCassette(true);
+      setIsPlaying(true);
+      if (cassetteAudioRef.current) {
+        cassetteAudioRef.current.src = birthdayConfig.music.cassetteSongs[nextIdx].url;
+        cassetteAudioRef.current
+          .play()
+          .catch((err) => console.log("Next cassette play blocked:", err));
+      }
+    } else {
+      const nextIdx = (currentBgSongIndex + 1) % birthdayConfig.music.pageSongs.length;
+      setCurrentBgSongIndex(nextIdx);
+      setIsPlaying(true);
+      if (bgAudioRef.current) {
+        bgAudioRef.current.src = birthdayConfig.music.pageSongs[nextIdx].url;
+        bgAudioRef.current.play().catch((err) => console.log("Next bg song play blocked:", err));
+      }
+    }
+  };
+
+  const handleBgEnded = () => {
+    const nextIdx = (currentBgSongIndex + 1) % birthdayConfig.music.pageSongs.length;
+    setCurrentBgSongIndex(nextIdx);
+    if (bgAudioRef.current) {
+      bgAudioRef.current.src = birthdayConfig.music.pageSongs[nextIdx].url;
+      bgAudioRef.current.play().catch((err) => console.log("Bg ended play blocked:", err));
+    }
+  };
+
+  const handleCassetteEnded = () => {
+    const nextIdx = (currentCassetteIndex + 1) % birthdayConfig.music.cassetteSongs.length;
+    setCurrentCassetteIndex(nextIdx);
+    if (cassetteAudioRef.current) {
+      cassetteAudioRef.current.src = birthdayConfig.music.cassetteSongs[nextIdx].url;
+      cassetteAudioRef.current
+        .play()
+        .catch((err) => console.log("Cassette ended play blocked:", err));
     }
   };
 
@@ -123,7 +178,18 @@ function BirthdayPage() {
   useEffect(() => {
     if (!opened) return;
 
-    const sceneIds = ["welcome", "letter", "effort", "timeline", "archive", "soundtrack", "gift", "promise", "finale", "gallery"];
+    const sceneIds = [
+      "welcome",
+      "letter",
+      "effort",
+      "timeline",
+      "archive",
+      "soundtrack",
+      "gift",
+      "promise",
+      "finale",
+      "gallery",
+    ];
     const sceneToSongMap: Record<string, number> = {
       welcome: 0,
       letter: 1,
@@ -138,7 +204,7 @@ function BirthdayPage() {
     };
 
     let observer: IntersectionObserver | null = null;
-    let timer: any;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
     const setupObserver = () => {
       const welcomeEl = document.getElementById("welcome");
@@ -150,17 +216,13 @@ function BirthdayPage() {
       const callback = (entries: IntersectionObserverEntry[]) => {
         const visibleEntries = entries.filter((e) => e.isIntersecting);
         if (visibleEntries.length > 0) {
-          const mainEntry = visibleEntries.reduce((max, entry) =>
-            entry.intersectionRatio > max.intersectionRatio ? entry : max
-            , visibleEntries[0]);
+          const mainEntry = visibleEntries.reduce(
+            (max, entry) => (entry.intersectionRatio > max.intersectionRatio ? entry : max),
+            visibleEntries[0],
+          );
 
           const sceneId = mainEntry.target.id;
           setActiveSection(sceneId);
-
-          const songIdx = sceneToSongMap[sceneId];
-          if (songIdx !== undefined && sceneId !== "soundtrack") {
-            setCurrentBgSongIndex(songIdx);
-          }
         }
       };
 
@@ -206,13 +268,13 @@ function BirthdayPage() {
       <audio
         ref={bgAudioRef}
         src={birthdayConfig.music.pageSongs[currentBgSongIndex].url}
-        loop
+        onEnded={handleBgEnded}
         style={{ display: "none" }}
       />
       <audio
         ref={cassetteAudioRef}
         src={birthdayConfig.music.cassetteSongs[currentCassetteIndex].url}
-        loop
+        onEnded={handleCassetteEnded}
         style={{ display: "none" }}
       />
       <AnimatePresence mode="wait">
@@ -240,8 +302,18 @@ function BirthdayPage() {
                 <SceneSoundtrack
                   isPlayingCassette={isPlayingCassette}
                   togglePlayCassette={() => {
-                    setIsPlayingCassette(!isPlayingCassette);
+                    const nextPlaying = !isPlayingCassette;
+                    setIsPlayingCassette(nextPlaying);
                     setIsPlaying(true);
+                    if (cassetteAudioRef.current) {
+                      if (nextPlaying) {
+                        cassetteAudioRef.current
+                          .play()
+                          .catch((err) => console.log("Cassette play blocked on toggle:", err));
+                      } else {
+                        cassetteAudioRef.current.pause();
+                      }
+                    }
                   }}
                   isMuted={isMuted}
                   toggleMute={toggleMute}
@@ -250,6 +322,12 @@ function BirthdayPage() {
                     setCurrentCassetteIndex(idx);
                     setIsPlayingCassette(true);
                     setIsPlaying(true);
+                    if (cassetteAudioRef.current) {
+                      cassetteAudioRef.current.src = birthdayConfig.music.cassetteSongs[idx].url;
+                      cassetteAudioRef.current
+                        .play()
+                        .catch((err) => console.log("Cassette play blocked on select:", err));
+                    }
                   }}
                 />
                 <SceneGift />
@@ -268,7 +346,9 @@ function BirthdayPage() {
           className="fixed bottom-5 right-5 z-40 flex items-center gap-3 rounded-full border border-[color:var(--gold)]/30 bg-[color:var(--ivory)]/15 p-2 px-4 backdrop-blur shadow-lg cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-[color:var(--ivory)]/25"
           onClick={togglePlay}
         >
-          <div className={`flex items-center text-[color:var(--rose)] ${isPlaying && (activeSection !== "soundtrack" || isPlayingCassette) ? "spinning" : ""}`}>
+          <div
+            className={`flex items-center text-[color:var(--rose)] ${isPlaying && (activeSection !== "soundtrack" || isPlayingCassette) ? "spinning" : ""}`}
+          >
             <Music className="h-4 w-4" />
           </div>
           <span className="text-[10px] tracking-wider uppercase font-semibold text-[color:var(--mauve)] max-w-[120px] truncate">
@@ -277,9 +357,19 @@ function BirthdayPage() {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              handleNextTrack();
+            }}
+            className="border-none bg-transparent text-[color:var(--rose)]/80 hover:text-[color:var(--rose)] cursor-pointer p-0 ml-1 flex items-center"
+            title="Next Track"
+          >
+            <SkipForward className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               toggleMute();
             }}
-            className="border-none bg-transparent text-[color:var(--rose)]/80 hover:text-[color:var(--rose)] cursor-pointer p-0"
+            className="border-none bg-transparent text-[color:var(--rose)]/80 hover:text-[color:var(--rose)] cursor-pointer p-0 ml-1 flex items-center"
           >
             {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
@@ -396,8 +486,7 @@ function SceneWelcome() {
       id="welcome"
       className="relative flex min-h-screen items-center justify-center overflow-hidden text-center"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.95 0.04 10) 0%, oklch(0.92 0.06 350) 100%)",
+        background: "linear-gradient(180deg, oklch(0.95 0.04 10) 0%, oklch(0.92 0.06 350) 100%)",
       }}
     >
       <Stars count={50} />
@@ -443,7 +532,11 @@ function SceneWelcome() {
 /* ===================== Scene 3: Love Letter ===================== */
 function SceneLetter() {
   return (
-    <section id="letter" className="relative overflow-hidden py-32" style={{ background: "var(--ivory)" }}>
+    <section
+      id="letter"
+      className="relative overflow-hidden py-32"
+      style={{ background: "var(--ivory)" }}
+    >
       <div
         className="absolute inset-0 opacity-30"
         style={{
@@ -508,8 +601,9 @@ function SceneLetter() {
   );
 }
 
+const startDate = new Date(birthdayConfig.meetingDate);
+
 function SceneEffort() {
-  const startDate = new Date(birthdayConfig.meetingDate);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [animatedDiffMs, setAnimatedDiffMs] = useState(0);
@@ -529,7 +623,7 @@ function SceneEffort() {
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.15 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -570,7 +664,7 @@ function SceneEffort() {
     return () => clearInterval(timer);
   }, [isAnimating]);
 
-  const diffMs = isAnimating ? animatedDiffMs : (liveNow.getTime() - startDate.getTime());
+  const diffMs = isAnimating ? animatedDiffMs : liveNow.getTime() - startDate.getTime();
 
   // Cumulative values
   const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
@@ -608,13 +702,29 @@ function SceneEffort() {
   };
 
   const currentDate = isAnimating ? new Date(startDate.getTime() + diffMs) : liveNow;
-  const { years, months, days: remainingDays, totalMonths, decimalYears } = getDetailedDifference(startDate, currentDate);
+  const {
+    years,
+    months,
+    days: remainingDays,
+    totalMonths,
+    decimalYears,
+  } = getDetailedDifference(startDate, currentDate);
 
   const formatDate = (date: Date) => {
     const day = date.getDate();
     const monthsNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return `${day} ${monthsNames[date.getMonth()]} ${date.getFullYear()}`;
   };
@@ -630,8 +740,7 @@ function SceneEffort() {
       ref={containerRef}
       className="relative overflow-hidden py-32 text-center"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
+        background: "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
       }}
     >
       <Stars count={70} />
@@ -651,7 +760,7 @@ function SceneEffort() {
             { label: "Days", value: totalDays.toLocaleString() },
             { label: "Hours", value: totalHours.toLocaleString() },
             { label: "Minutes", value: totalMinutes.toLocaleString() },
-            { label: "Seconds", value: totalSeconds.toLocaleString(), isTicking: true }
+            { label: "Seconds", value: totalSeconds.toLocaleString(), isTicking: true },
           ].map((s, i) => (
             <motion.div
               key={i}
@@ -662,12 +771,13 @@ function SceneEffort() {
               className="rounded-2xl border border-[color:var(--gold)]/30 bg-[color:var(--ivory)]/5 p-4 sm:p-6 backdrop-blur flex flex-col justify-center min-h-[140px]"
             >
               <div
-                className={`font-display text-[color:var(--gold)] ${s.isTicking ? 'tabular-nums' : ''} ${s.value.length > 8
-                  ? 'text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
-                  : s.value.length > 5
-                    ? 'text-2xl sm:text-3xl lg:text-4xl xl:text-5xl'
-                    : 'text-3xl sm:text-4xl lg:text-5xl xl:text-6xl'
-                  }`}
+                className={`font-display text-[color:var(--gold)] ${s.isTicking ? "tabular-nums" : ""} ${
+                  s.value.length > 8
+                    ? "text-xl sm:text-2xl lg:text-3xl xl:text-4xl"
+                    : s.value.length > 5
+                      ? "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl"
+                      : "text-3xl sm:text-4xl lg:text-5xl xl:text-6xl"
+                }`}
               >
                 {s.value}
               </div>
@@ -688,9 +798,12 @@ function SceneEffort() {
               transition={{ duration: 0.8 }}
               className="rounded-2xl border border-[color:var(--gold)]/20 bg-[color:var(--ivory)]/5 p-6 backdrop-blur"
             >
-              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">Months</p>
+              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">
+                Months
+              </p>
               <p className="mt-2 font-serif-soft text-2xl text-[color:var(--ivory)] font-medium">
-                ~{totalMonths} month{totalMonths !== 1 ? 's' : ''} and {remainingDays} day{remainingDays !== 1 ? 's' : ''}
+                ~{totalMonths} month{totalMonths !== 1 ? "s" : ""} and {remainingDays} day
+                {remainingDays !== 1 ? "s" : ""}
               </p>
             </motion.div>
 
@@ -701,9 +814,15 @@ function SceneEffort() {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="rounded-2xl border border-[color:var(--gold)]/20 bg-[color:var(--ivory)]/5 p-6 backdrop-blur"
             >
-              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">Years</p>
+              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">
+                Years
+              </p>
               <p className="mt-2 font-serif-soft text-2xl text-[color:var(--ivory)] font-medium">
-                ~{years} year{years !== 1 ? 's' : ''} and {remainingDays} day{remainingDays !== 1 ? 's' : ''} <span className="text-[color:var(--gold)]/80 text-lg font-light">(≈ {decimalYears} years)</span>
+                ~{years} year{years !== 1 ? "s" : ""} and {remainingDays} day
+                {remainingDays !== 1 ? "s" : ""}{" "}
+                <span className="text-[color:var(--gold)]/80 text-lg font-light">
+                  (≈ {decimalYears} years)
+                </span>
               </p>
             </motion.div>
           </div>
@@ -843,7 +962,8 @@ function SceneUnspokenArchive({ readLetters, onRead }: SceneUnspokenArchiveProps
           Deep within the heart
         </h3>
         <p className="mt-4 font-serif-soft text-lg text-[color:var(--mauve)]/80">
-          Click to read each envelope. Reveal the final lock when all are read. ({readLetters.length}/{birthdayConfig.secretLetters.length} read)
+          Click to read each envelope. Reveal the final lock when all are read. (
+          {readLetters.length}/{birthdayConfig.secretLetters.length} read)
         </p>
         <div className="gold-divider mx-auto mt-6 w-32" />
 
@@ -862,8 +982,11 @@ function SceneUnspokenArchive({ readLetters, onRead }: SceneUnspokenArchiveProps
                 className="group relative flex flex-col items-center justify-center rounded-2xl border border-[color:var(--rose)]/25 bg-white/40 p-8 backdrop-blur transition-all duration-300 hover:border-[color:var(--rose)]/60 hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] hover:translate-y-[-4px] cursor-pointer"
               >
                 <div
-                  className={`mb-4 transition-colors duration-300 ${isRead ? "text-[color:var(--gold)]" : "text-[color:var(--rose)] group-hover:text-[color:var(--mauve)]"
-                    }`}
+                  className={`mb-4 transition-colors duration-300 ${
+                    isRead
+                      ? "text-[color:var(--gold)]"
+                      : "text-[color:var(--rose)] group-hover:text-[color:var(--mauve)]"
+                  }`}
                 >
                   {isRead ? <MailOpen className="h-12 w-12" /> : <Mail className="h-12 w-12" />}
                 </div>
@@ -1006,8 +1129,7 @@ function SceneGift() {
       id="gift"
       className="relative overflow-hidden py-32"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.93 0.04 10) 0%, oklch(0.96 0.02 60) 100%)",
+        background: "linear-gradient(180deg, oklch(0.93 0.04 10) 0%, oklch(0.96 0.02 60) 100%)",
       }}
     >
       <div className="mx-auto max-w-6xl px-6 text-center">
@@ -1016,7 +1138,8 @@ function SceneGift() {
           Choose Your Gifts 🎁
         </h3>
         <p className="mt-4 font-serif-soft text-lg text-[color:var(--mauve)]/80 max-w-2xl mx-auto">
-          I have written six special promises for you. Choose **any three** cards and let's see your luck on what you get from me!
+          I have written six special promises for you. Choose **any three** cards and let's see your
+          luck on what you get from me!
         </p>
         <p className="mt-2 font-serif-soft italic font-semibold text-[color:var(--rose)]">
           Selected: {selected.length} / 3
@@ -1036,8 +1159,9 @@ function SceneGift() {
                 transition={{ duration: 0.6, delay: i * 0.08 }}
                 onClick={() => handleCardClick(i)}
                 disabled={isDisabled}
-                className={`group relative h-56 [perspective:1200px] transition-all duration-300 ${isDisabled && !isFlipped ? "opacity-40 cursor-not-allowed scale-95" : ""
-                  } ${isFlipped ? "cursor-default" : ""}`}
+                className={`group relative h-56 [perspective:1200px] transition-all duration-300 ${
+                  isDisabled && !isFlipped ? "opacity-40 cursor-not-allowed scale-95" : ""
+                } ${isFlipped ? "cursor-default" : ""}`}
               >
                 <div
                   className="relative h-full w-full transition-transform duration-700 [transform-style:preserve-3d]"
@@ -1045,8 +1169,11 @@ function SceneGift() {
                 >
                   {/* front */}
                   <div
-                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[color:var(--gold)]/60 p-6 [backface-visibility:hidden] transition-shadow duration-300 ${!isDisabled ? "group-hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] group-hover:border-[color:var(--rose)]/50" : ""
-                      }`}
+                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[color:var(--gold)]/60 p-6 [backface-visibility:hidden] transition-shadow duration-300 ${
+                      !isDisabled
+                        ? "group-hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] group-hover:border-[color:var(--rose)]/50"
+                        : ""
+                    }`}
                     style={{
                       background:
                         "linear-gradient(135deg, oklch(0.99 0.005 75) 0%, oklch(0.95 0.04 10) 100%)",
@@ -1206,7 +1333,10 @@ function SceneNote() {
           </div>
         </div>
 
-        <p className="mt-6 text-sm uppercase tracking-widest text-[color:var(--gold)]/70 cursor-pointer hover:text-[color:var(--gold)] transition-colors" onClick={handleOpen}>
+        <p
+          className="mt-6 text-sm uppercase tracking-widest text-[color:var(--gold)]/70 cursor-pointer hover:text-[color:var(--gold)] transition-colors"
+          onClick={handleOpen}
+        >
           {isOpened ? "Tap to separate the halves" : "Tap the note to bring the halves together"}
         </p>
 
@@ -1235,7 +1365,6 @@ function SceneNote() {
     </section>
   );
 }
-
 
 /* ===================== Scene 6.5: The Soundtrack of Us ===================== */
 interface SceneSoundtrackProps {
@@ -1266,7 +1395,8 @@ function SceneSoundtrack({
       holeBorder: "var(--rose)",
       textColor: "var(--mauve)",
       glowColor: "rgba(196, 122, 163, 0.45)",
-      badgeColor: "bg-[color:var(--rose)]/25 text-[color:var(--rose)] border-[color:var(--rose)]/30",
+      badgeColor:
+        "bg-[color:var(--rose)]/25 text-[color:var(--rose)] border-[color:var(--rose)]/30",
     },
     {
       name: "gold",
@@ -1278,7 +1408,8 @@ function SceneSoundtrack({
       holeBorder: "var(--gold)",
       textColor: "oklch(0.45 0.08 75)",
       glowColor: "rgba(232, 200, 122, 0.45)",
-      badgeColor: "bg-[color:var(--gold)]/25 text-[color:var(--gold)] border-[color:var(--gold)]/30",
+      badgeColor:
+        "bg-[color:var(--gold)]/25 text-[color:var(--gold)] border-[color:var(--gold)]/30",
     },
     {
       name: "mauve",
@@ -1290,7 +1421,8 @@ function SceneSoundtrack({
       holeBorder: "var(--mauve)",
       textColor: "var(--mauve)",
       glowColor: "rgba(90, 40, 75, 0.45)",
-      badgeColor: "bg-[color:var(--mauve)]/25 text-[color:var(--mauve)] border-[color:var(--mauve)]/30",
+      badgeColor:
+        "bg-[color:var(--mauve)]/25 text-[color:var(--mauve)] border-[color:var(--mauve)]/30",
     },
   ];
 
@@ -1307,8 +1439,7 @@ function SceneSoundtrack({
       id="soundtrack"
       className="relative overflow-hidden py-32 text-center"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
+        background: "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
       }}
     >
       <Stars count={60} />
@@ -1320,7 +1451,8 @@ function SceneSoundtrack({
           The Soundtrack of Us
         </h3>
         <p className="mt-4 font-serif-soft text-lg text-[color:var(--blush)]/80 max-w-xl mx-auto">
-          Three dedicated cassettes, specifically curated for you. Click any cassette to play its song. Scrolling away will pause the player and restore the background theme music.
+          Three dedicated cassettes, specifically curated for you. Click any cassette to play its
+          song. Scrolling away will pause the player and restore the background theme music.
         </p>
         <div className="gold-divider mx-auto mt-6 w-32" />
 
@@ -1448,7 +1580,11 @@ function SceneSoundtrack({
                     <span
                       className={`text-[10px] tracking-wider uppercase font-bold px-3 py-1 rounded-full border ${theme.badgeColor}`}
                     >
-                      {isCurrentPlaying ? "🔊 Playing" : isSelected ? "⏸️ Selected" : "🎵 Dedication"}
+                      {isCurrentPlaying
+                        ? "🔊 Playing"
+                        : isSelected
+                          ? "⏸️ Selected"
+                          : "🎵 Dedication"}
                     </span>
                   </div>
                   <h4 className="font-display text-lg text-[color:var(--ivory)] font-semibold">
@@ -1592,7 +1728,7 @@ function SceneFinale() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-transition={{ duration: 1 }}
+          transition={{ duration: 1 }}
           className="mx-auto mt-12 max-w-2xl font-serif-soft text-2xl italic text-[color:var(--ivory)]/90 md:text-3xl"
         >
           {birthdayConfig.birthdayMessage}
@@ -1607,7 +1743,7 @@ function GalleryVideoCard({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
-  const outTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -1617,33 +1753,42 @@ function GalleryVideoCard({ src }: { src: string }) {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Clear any pending removal
-            if (outTimer.current) clearTimeout(outTimer.current);
             // Load src only when needed
             if (!activeSrc) setActiveSrc(src);
-            el.play().catch(() => {});
           } else {
-            el.pause();
-            // After 500ms out of viewport, clear src to release GPU memory
-            outTimer.current = setTimeout(() => {
-              setActiveSrc(null);
-              setLoaded(false);
-            }, 500);
+            if (videoRef.current) {
+              videoRef.current.pause();
+            }
+            setIsHovered(false);
           }
         });
       },
-      { rootMargin: "100px 0px", threshold: 0.15 }
+      { rootMargin: "200px 0px", threshold: 0.01 },
     );
 
     observer.observe(el);
     return () => {
       observer.disconnect();
-      if (outTimer.current) clearTimeout(outTimer.current);
     };
   }, [src, activeSrc]);
 
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !activeSrc) return;
+
+    if (isHovered) {
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [isHovered, activeSrc]);
+
   return (
-    <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black">
+    <div
+      className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
           <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -1655,11 +1800,14 @@ function GalleryVideoCard({ src }: { src: string }) {
         muted
         loop
         playsInline
+        preload="metadata"
         onLoadedData={() => setLoaded(true)}
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
       <div className="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-        <span className="font-hand text-sm text-white drop-shadow">Tap to open ♡</span>
+        <span className="font-hand text-sm text-white drop-shadow">
+          Hover to play / Tap to open ♡
+        </span>
       </div>
     </div>
   );
@@ -1672,32 +1820,6 @@ interface SceneGalleryProps {
 
 function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
   const [active, setActive] = useState<number | null>(null);
-  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    birthdayConfig.galleryItems.forEach((item) => {
-      if (item.type === "photo") {
-        const img = new Image();
-        img.src = item.url;
-        img.onload = () => {
-          setAspectRatios((prev) => ({
-            ...prev,
-            [item.url]: img.naturalWidth / img.naturalHeight,
-          }));
-        };
-      } else {
-        const vid = document.createElement("video");
-        vid.src = item.url;
-        vid.preload = "metadata";
-        vid.onloadedmetadata = () => {
-          setAspectRatios((prev) => ({
-            ...prev,
-            [item.url]: vid.videoWidth / vid.videoHeight,
-          }));
-        };
-      }
-    });
-  }, []);
 
   const handleClose = () => {
     setActive(null);
@@ -1723,8 +1845,8 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
       <div className="mx-auto mt-16 max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-6 grid-flow-row-dense auto-rows-[180px] md:auto-rows-[220px]">
         {birthdayConfig.galleryItems.map((item, i) => {
           const isItemVideo = item.type === "video";
-          const ar = aspectRatios[item.url];
-          
+          const ar = item.aspectRatio;
+
           let spanClass = "col-span-1 row-span-1"; // default standard block
           if (ar) {
             if (ar < 0.8) {
@@ -1755,11 +1877,13 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 )}
-                
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 z-10">
                   <div className="flex items-center gap-2 text-white">
                     <Heart className="h-4 w-4 fill-white text-white" />
-                    <span className="font-hand text-sm">{isItemVideo ? "Play Video" : "View Memory"}</span>
+                    <span className="font-hand text-sm">
+                      {isItemVideo ? "Play Video" : "View Memory"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1785,7 +1909,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-xl rounded-xl bg-white p-4 md:p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] border border-white/20"
               style={{
-                boxShadow: "0 25px 60px -15px rgba(0,0,0,0.7)"
+                boxShadow: "0 25px 60px -15px rgba(0,0,0,0.7)",
               }}
             >
               {/* Close button inside modal */}
@@ -1798,7 +1922,10 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
               </button>
 
               {/* Media Area */}
-              <div className="relative overflow-hidden rounded-lg bg-neutral-900 shadow-inner flex items-center justify-center" style={{ maxHeight: "70vh" }}>
+              <div
+                className="relative overflow-hidden rounded-lg bg-neutral-900 shadow-inner flex items-center justify-center"
+                style={{ maxHeight: "70vh" }}
+              >
                 {isVideo ? (
                   <video
                     src={activeItem.url}
@@ -1826,14 +1953,21 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
                     {isVideo ? `Video #${active + 1}` : `Memory #${active + 1}`}
                   </p>
                   <p className="font-serif-soft text-xs text-[color:var(--foreground)]/60 mt-1 uppercase tracking-wider">
-                    {activeItem.url.split('/').pop()?.replace('_', ' #').replace('.mp4', '').replace('.jpg', '')}
+                    {activeItem.url
+                      .split("/")
+                      .pop()
+                      ?.replace("_", " #")
+                      .replace(".mp4", "")
+                      .replace(".jpg", "")}
                   </p>
                 </div>
-                
+
                 {/* Download / Save Button */}
                 <a
                   href={activeItem.url}
-                  download={isVideo ? `sri-video-${active + 1}.mp4` : `sri-memory-${active + 1}.jpg`}
+                  download={
+                    isVideo ? `sri-video-${active + 1}.mp4` : `sri-memory-${active + 1}.jpg`
+                  }
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center gap-2 rounded-full bg-[color:var(--rose)] px-5 py-2 text-sm font-medium text-white hover:bg-[color:var(--mauve)] transition shadow-[0_4px_12px_rgba(196,122,163,0.3)] cursor-pointer"
                 >
@@ -1858,4 +1992,3 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
     </section>
   );
 }
-

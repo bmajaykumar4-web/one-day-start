@@ -15,9 +15,10 @@ Currently, after Srividya unlocks the page by reading the **Unspoken Archive** l
 5. **SceneGallery** (Forever Page Photos & Videos — Long-term Memory Wall)
 
 ### Tonal Flaws in Current Order:
-- **Vibe Interruption**: Unlocking the *Unspoken Archive* (highly emotional letters) drops Srividya directly into *Gift Coupons* (gamified/playful), creating a slight emotional jump.
-- **Lost Climax**: The *₹10 Promise* (a deep personal secret) is sandwiched between *Coupons* and *Cassettes*, diluting its emotional impact.
-- **Music Placement**: *The Soundtrack of Us* sits below the note and coupons. Auditory experiences are best introduced as gateways or transitional points.
+
+- **Vibe Interruption**: Unlocking the _Unspoken Archive_ (highly emotional letters) drops Srividya directly into _Gift Coupons_ (gamified/playful), creating a slight emotional jump.
+- **Lost Climax**: The _₹10 Promise_ (a deep personal secret) is sandwiched between _Coupons_ and _Cassettes_, diluting its emotional impact.
+- **Music Placement**: _The Soundtrack of Us_ sits below the note and coupons. Auditory experiences are best introduced as gateways or transitional points.
 
 ---
 
@@ -36,13 +37,13 @@ graph TD
 
 ### Why this proposed order creates a better story:
 
-| Step | Section | Vibe & Narrative Role |
-| :--- | :--- | :--- |
-| **1** | **The Soundtrack** | **The Auditory Gateway**: Right after unlocking the page, she is greeted with visual cassettes and dedicated music she can play, setting an intimate mood. |
-| **2** | **Gift Coupons** | **The Playful Promise**: Introduces lighthearted future activities (coupons for dates, letters, movies), making her smile. |
-| **3** | **The ₹10 Promise** | **The Emotional Anchor**: Elevates the tone from playful to deeply meaningful by merging the split note halves, creating a moment of pure connection. |
+| Step  | Section             | Vibe & Narrative Role                                                                                                                                             |
+| :---- | :------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | **The Soundtrack**  | **The Auditory Gateway**: Right after unlocking the page, she is greeted with visual cassettes and dedicated music she can play, setting an intimate mood.        |
+| **2** | **Gift Coupons**    | **The Playful Promise**: Introduces lighthearted future activities (coupons for dates, letters, movies), making her smile.                                        |
+| **3** | **The ₹10 Promise** | **The Emotional Anchor**: Elevates the tone from playful to deeply meaningful by merging the split note halves, creating a moment of pure connection.             |
 | **4** | **Birthday Finale** | **The Celebration Climax**: Leads directly from the emotional promise into the peak birthday moment—blowing out the candles and revealing the main birthday wish. |
-| **5** | **Forever Gallery** | **The Resting Place**: She completes the journey by landing on the interactive, endless photo & video wall where she can stay and browse old memories. |
+| **5** | **Forever Gallery** | **The Resting Place**: She completes the journey by landing on the interactive, endless photo & video wall where she can stay and browse old memories.            |
 
 ---
 
@@ -51,11 +52,21 @@ graph TD
 ### Scroll Tracker and Song Mappings
 
 #### [MODIFY] [index.tsx](file:///d:/one-day-start-main/one-day-start-main/src/routes/index.tsx)
+
 - Reorder the section lists in `sceneIds` and adjust `sceneToSongMap` to reflect the new scroll sequence:
+
 ```ts
 const sceneIds = [
-  "welcome", "letter", "effort", "timeline", "archive", 
-  "soundtrack", "gift", "promise", "finale", "gallery"
+  "welcome",
+  "letter",
+  "effort",
+  "timeline",
+  "archive",
+  "soundtrack",
+  "gift",
+  "promise",
+  "finale",
+  "gallery",
 ];
 
 const sceneToSongMap: Record<string, number> = {
@@ -75,7 +86,9 @@ const sceneToSongMap: Record<string, number> = {
 ### Component Rendering Order
 
 #### [MODIFY] [index.tsx](file:///d:/one-day-start-main/one-day-start-main/src/routes/index.tsx)
+
 - Reorder the JSX rendering blocks inside the `allRead` wrapper:
+
 ```tsx
 {allRead && (
   <motion.div
@@ -106,12 +119,14 @@ const sceneToSongMap: Record<string, number> = {
 ## 4. Open Questions & Review Required
 
 > [!IMPORTANT]
+>
 > - Do you prefer this **crescendo flow** (Soundtrack → Gift → ₹10 Promise → Finale → Gallery), or do you want to keep any specific section in a different spot?
 > - Let me know your thoughts so we can adjust or execute the plan!
 
 ---
 
 ## 5. Verification Plan
+
 - Verify scrolling through sections switches background audio correctly according to the new sequence map.
 - Verify page animations load sequentially as she scrolls down the page.
 - Compile check using `npm run build`.
