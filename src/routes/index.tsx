@@ -18,6 +18,13 @@ import {
   SkipForward,
 } from "lucide-react";
 import { birthdayConfig } from "@/lib/birthday-config";
+import { ValentineLetter } from "@/components/special/ValentineLetter";
+import { HeartRateECG } from "@/components/special/HeartRateECG";
+import { BirthdayCake } from "@/components/special/BirthdayCake";
+import { FireworkCanvas } from "@/components/special/FireworkCanvas";
+import { CursorTrail } from "@/components/special/CursorTrail";
+import { ConfessionCard } from "@/components/special/ConfessionCard";
+import { Carousel3D } from "@/components/special/Carousel3D";
 import { Petals, Stars } from "@/components/Petals";
 import petalsBg from "@/assets/petals-bg.jpg";
 import parchment from "@/assets/parchment.jpg";
@@ -50,6 +57,7 @@ function BirthdayPage() {
   const [isPlayingCassette, setIsPlayingCassette] = useState(false);
   const [activeSection, setActiveSection] = useState("welcome");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
 
   // Centralized Audio coordinator
   useEffect(() => {
@@ -265,6 +273,8 @@ function BirthdayPage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden">
+      <CursorTrail />
+      <FireworkCanvas active={showFireworks} />
       <audio
         ref={bgAudioRef}
         src={birthdayConfig.music.pageSongs[currentBgSongIndex].url}
@@ -332,7 +342,7 @@ function BirthdayPage() {
                 />
                 <SceneGift />
                 <SceneNote />
-                <SceneFinale />
+                <SceneFinale onBlowOut={() => setShowFireworks(true)} />
                 <SceneGallery onVideoPlayStateChange={setIsVideoPlaying} />
               </motion.div>
             )}
@@ -381,20 +391,6 @@ function BirthdayPage() {
 
 /* ===================== Scene 1: Landing ===================== */
 function SceneLanding({ onOpen }: { onOpen: () => void }) {
-  const [busting, setBusting] = useState(false);
-
-  const handleOpen = () => {
-    setBusting(true);
-    confetti({
-      particleCount: 120,
-      spread: 90,
-      origin: { y: 0.55 },
-      colors: ["#F2A7BB", "#E8C87A", "#C47AA3", "#FFD6E0"],
-      scalar: 1.1,
-    });
-    setTimeout(onOpen, 1400);
-  };
-
   return (
     <motion.section
       initial={{ opacity: 1 }}
@@ -409,70 +405,8 @@ function SceneLanding({ onOpen }: { onOpen: () => void }) {
       <Stars count={90} />
       <Petals count={14} />
 
-      <div className="relative z-10 mx-auto max-w-2xl px-6">
-        <motion.p
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 1 }}
-          className="font-hand text-2xl text-[color:var(--gold)]"
-        >
-          Pssst… come closer
-        </motion.p>
-
-        <motion.div
-          animate={
-            busting
-              ? { scale: [1, 1.15, 0], rotate: [0, -8, 12], opacity: [1, 1, 0] }
-              : { y: [0, -10, 0] }
-          }
-          transition={
-            busting ? { duration: 1.2 } : { duration: 4, repeat: Infinity, ease: "easeInOut" }
-          }
-          className="mx-auto mt-6 w-[260px] md:w-[340px]"
-          style={{ filter: "drop-shadow(0 20px 40px rgba(232,200,122,.35))" }}
-        >
-          <img src={envelope} alt="Sealed love letter envelope" width={768} height={768} />
-        </motion.div>
-
-        <motion.h1
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.9, duration: 1 }}
-          className="font-script mt-6 text-5xl text-[color:var(--ivory)] md:text-7xl"
-        >
-          I made something just for you
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="mx-auto mt-4 max-w-md font-serif-soft text-lg italic text-[color:var(--blush)]"
-        >
-          A little world. A few scenes. A lot of love.
-        </motion.p>
-
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, duration: 0.8 }}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={handleOpen}
-          className="btn-romance mt-10"
-        >
-          <Heart className="h-5 w-5 fill-current" />
-          Open it, Sri
-        </motion.button>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6, y: [0, 8, 0] }}
-          transition={{ delay: 2.5, duration: 2.4, repeat: Infinity }}
-          className="mt-12 text-[color:var(--ivory)]/60"
-        >
-          <ChevronDown className="mx-auto h-6 w-6" />
-        </motion.div>
+      <div className="relative z-10 mx-auto max-w-2xl px-6 w-full flex flex-col items-center">
+        <ValentineLetter onOpen={onOpen} />
       </div>
     </motion.section>
   );
@@ -753,6 +687,7 @@ function SceneEffort() {
           From {formattedStart} &rarr; {formattedNow} (today):
         </p>
         <div className="gold-divider mx-auto mt-6 w-32" />
+        <HeartRateECG />
 
         {/* Cumulative Counters Grid */}
         <div className="mt-16 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
@@ -1101,6 +1036,7 @@ function SceneGift() {
     }
     return [];
   });
+  const [showConfession, setShowConfession] = useState(false);
 
   const handleCardClick = (index: number) => {
     if (selected.includes(index)) {
@@ -1199,9 +1135,21 @@ function SceneGift() {
                     <Sparkles className="h-7 w-7 opacity-80" />
                     <p className="mt-3 font-display text-2xl">{c.title}</p>
                     <p className="mt-2 px-2 font-serif-soft italic opacity-90">{c.note}</p>
-                    <span className="absolute top-4 right-4 text-[10px] tracking-wider font-bold bg-white/20 text-[color:var(--ivory)] px-2.5 py-0.5 rounded-full uppercase">
-                      Chosen
-                    </span>
+                    {i === 1 ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowConfession(true);
+                        }}
+                        className="mt-3 px-4 py-1.5 bg-[color:var(--gold)] text-[#4b3621] font-semibold text-xs rounded-full hover:scale-105 transition cursor-pointer flex items-center gap-1 shadow-md"
+                      >
+                        Unlock Secret 🔑
+                      </button>
+                    ) : (
+                      <span className="absolute top-4 right-4 text-[10px] tracking-wider font-bold bg-white/20 text-[color:var(--ivory)] px-2.5 py-0.5 rounded-full uppercase">
+                        Chosen
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.button>
@@ -1209,6 +1157,9 @@ function SceneGift() {
           })}
         </div>
       </div>
+      <AnimatePresence>
+        {showConfession && <ConfessionCard onClose={() => setShowConfession(false)} />}
+      </AnimatePresence>
     </section>
   );
 }
@@ -1624,33 +1575,9 @@ function SceneSoundtrack({
 }
 
 /* ===================== Scene 7: Birthday Finale ===================== */
-function SceneFinale() {
+function SceneFinale({ onBlowOut }: { onBlowOut: () => void }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [80, -80]);
-  const [candles, setCandles] = useState([true, true, true]);
-
-  const blow = (i: number) => {
-    setCandles((c) => c.map((v, idx) => (idx === i ? false : v)));
-    confetti({
-      particleCount: 60,
-      spread: 70,
-      origin: { y: 0.45, x: 0.3 + i * 0.2 },
-      colors: ["#F2A7BB", "#E8C87A", "#C47AA3", "#FFD6E0", "#fff"],
-    });
-    setTimeout(() => {
-      const all = candles.map((v, idx) => (idx === i ? false : v)).every((v) => !v);
-      if (all) {
-        confetti({
-          particleCount: 220,
-          spread: 130,
-          origin: { y: 0.6 },
-          colors: ["#F2A7BB", "#E8C87A", "#C47AA3", "#FFD6E0", "#fff"],
-          scalar: 1.2,
-        });
-      }
-    }, 100);
-  };
 
   return (
     <section
@@ -1666,7 +1593,7 @@ function SceneFinale() {
       <Stars count={80} />
       <Petals count={10} />
 
-      <motion.div className="relative z-10 mx-auto max-w-3xl px-6">
+      <motion.div className="relative z-10 mx-auto max-w-3xl px-6 flex flex-col items-center">
         <p className="font-hand text-2xl text-[color:var(--gold)]">Make a wish</p>
         <h3 className="mt-2 font-display text-5xl text-[color:var(--ivory)] md:text-7xl">
           <span className="shimmer-text">Happy Birthday</span>
@@ -1675,54 +1602,8 @@ function SceneFinale() {
           {birthdayConfig.herName}
         </p>
 
-        <div className="relative mx-auto mt-10 w-[280px] md:w-[360px]">
-          <img
-            src={cake}
-            alt="A pink birthday cake with candles"
-            width={768}
-            height={768}
-            style={{ filter: "drop-shadow(0 20px 30px rgba(232,200,122,.35))" }}
-          />
-          {/* clickable candle hot-spots */}
-          <div className="absolute inset-0 pointer-events-none">
-            {candles.map((lit, i) => {
-              const positions = [
-                { left: "37.5%", top: "27%", rotate: "-15deg" },
-                { left: "50%", top: "22%", rotate: "0deg" },
-                { left: "62.5%", top: "27%", rotate: "15deg" },
-              ];
-              const pos = positions[i];
-              return (
-                <button
-                  key={i}
-                  onClick={() => lit && blow(i)}
-                  aria-label={`Blow out candle ${i + 1}`}
-                  className="absolute w-[16%] h-[16%] flex items-center justify-center cursor-pointer pointer-events-auto"
-                  style={{
-                    left: pos.left,
-                    top: pos.top,
-                    transform: `translate(-50%, -50%) rotate(${pos.rotate})`,
-                  }}
-                >
-                  {lit && (
-                    <span
-                      className="candle-flame block h-7 w-3.5 rounded-full"
-                      style={{
-                        background:
-                          "radial-gradient(circle at 50% 60%, #fff7c2 0%, #ffd24c 50%, #ff7a3a 100%)",
-                        boxShadow: "0 0 18px #ffb84d, 0 0 36px #ff7a3a",
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <p className="mt-3 text-sm uppercase tracking-widest text-[color:var(--blush)]/70">
-          Tap the flames to blow them out
-        </p>
+        {/* Morphing Interactive Cake Component */}
+        <BirthdayCake onBlowOut={onBlowOut} />
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -1842,55 +1723,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
         </p>
       </div>
 
-      <div className="mx-auto mt-16 max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-6 grid-flow-row-dense auto-rows-[180px] md:auto-rows-[220px]">
-        {birthdayConfig.galleryItems.map((item, i) => {
-          const isItemVideo = item.type === "video";
-          const ar = item.aspectRatio;
-
-          let spanClass = "col-span-1 row-span-1"; // default standard block
-          if (ar) {
-            if (ar < 0.8) {
-              spanClass = "col-span-1 row-span-2"; // Portrait (tall) building block
-            } else if (ar > 1.35) {
-              spanClass = "col-span-2 row-span-1"; // Landscape (wide) building block
-            }
-          }
-
-          return (
-            <motion.button
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: (i % 4) * 0.05 }}
-              onClick={() => setActive(i)}
-              className={`group overflow-hidden rounded-xl border border-[color:var(--gold)]/10 bg-white/20 p-2 backdrop-blur hover:border-[color:var(--rose)]/40 transition-all duration-300 hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] cursor-pointer flex flex-col items-stretch justify-stretch ${spanClass}`}
-            >
-              <div className="relative overflow-hidden rounded-lg bg-black/5 w-full h-full flex flex-col justify-stretch items-stretch">
-                {isItemVideo ? (
-                  <GalleryVideoCard src={item.url} />
-                ) : (
-                  <img
-                    src={item.url}
-                    alt={`Memory photo ${i + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                )}
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 z-10">
-                  <div className="flex items-center gap-2 text-white">
-                    <Heart className="h-4 w-4 fill-white text-white" />
-                    <span className="font-hand text-sm">
-                      {isItemVideo ? "Play Video" : "View Memory"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
+      <Carousel3D items={birthdayConfig.galleryItems} onItemClick={(idx) => setActive(idx)} />
 
       <AnimatePresence>
         {active !== null && activeItem && (
