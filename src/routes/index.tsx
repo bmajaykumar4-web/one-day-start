@@ -1839,20 +1839,22 @@ function GalleryVideoCard({ src }: { src: string }) {
   );
 }
 
-const friendsGlob = import.meta.glob('/public/photos/friends/*', { eager: true });
-const heroChaiGlob = import.meta.glob('/public/photos/hero_chai/*', { eager: true });
-const midnightTalksGlob = import.meta.glob('/public/photos/midnight_talks/*', { eager: true });
-const bogMakingGlob = import.meta.glob('/public/photos/bog_making/*', { eager: true });
-const surpriseGlob = import.meta.glob('/public/photos/surprise/*', { eager: true });
+const friendsGlob = import.meta.glob('/src/photos/friends/*', { eager: true });
+const heroChaiGlob = import.meta.glob('/src/photos/hero_chai/*', { eager: true });
+const midnightTalksGlob = import.meta.glob('/src/photos/midnight_talks/*', { eager: true });
+const bogMakingGlob = import.meta.glob('/src/photos/bog_making/*', { eager: true });
+const surpriseGlob = import.meta.glob('/src/photos/surprise/*', { eager: true });
 
 const getPublicPaths = (globResult: Record<string, any>) => {
   return Object.keys(globResult).map((path, idx) => {
-    const cleanPath = path.startsWith('/public') ? path.replace('/public', '') : path;
-    const isVideo = cleanPath.toLowerCase().endsWith('.mp4') || cleanPath.toLowerCase().endsWith('.webm');
+    const module = globResult[path] as { default: string } | string;
+    const resolvedUrl = typeof module === 'string' ? module : module.default;
+    const isVideo = path.toLowerCase().endsWith('.mp4') || path.toLowerCase().endsWith('.webm');
     return {
       originalIndex: idx,
       type: isVideo ? ('video' as const) : ('photo' as const),
-      url: cleanPath,
+      url: resolvedUrl,
+      filename: path.split("/").pop() || "",
       aspectRatio: isVideo ? 1.778 : undefined
     };
   });
@@ -1967,7 +1969,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
 
   const filteredItems = currentVolume
     ? currentVolume.items.filter((item) => {
-      const filename = item.url.split("/").pop()?.toLowerCase() || "";
+      const filename = item.filename?.toLowerCase() || item.url.split("/").pop()?.toLowerCase() || "";
       const refCode = `ref-vol${openVolume! + 1}-crd${item.originalIndex + 1}`;
       const query = searchQuery.toLowerCase();
       return filename.includes(query) || refCode.includes(query);

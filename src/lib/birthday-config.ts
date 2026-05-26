@@ -1,3 +1,11 @@
+import cuteSri from "@/photos/surprise/cute_sri.png";
+import memory12 from "@/photos/surprise/memory_12.jpg";
+import memory33 from "@/photos/friends/memory_33.jpg";
+import video143 from "@/photos/bog_making/video_143.mp4";
+import memory27 from "@/photos/surprise/memory_27.jpg";
+import heroChaiWebp from "@/photos/hero_chai/hero chai.webp";
+import memory18 from "@/photos/friends/memory_18.jpg";
+
 // Personalize this file with her details ✨
 export const birthdayConfig = {
   herName: "Srividya",
@@ -19,48 +27,48 @@ export const birthdayConfig = {
       date: "Srividya",
       caption:
         "You entered my life like a soft rain after a long summer... and for the first time, my heart learned what it feels like to be truly special.",
-      image: "/photos/surprise/cute_sri.png",
+      image: cuteSri,
     },
 
     {
       date: "Our First Photo",
       caption:
         "This picture is not just a memory… it is a frozen heartbeat of the happiest moment my soul still holds close.",
-      image: "/photos/surprise/memory_12.jpg",
+      image: memory12,
     },
 
     {
       date: "Three of us",
       caption:
         "Every time my eyes fall on this photo, my heart quietly travels back to those golden days we never knew would become memories.",
-      image: "/photos/friends/memory_33.jpg",
+      image: memory33,
     },
 
     {
       date: "The Rapido Guy",
       caption:
         "Those bike rides were never just journeys… they were little pieces of happiness carried by the wind, and even today, my bike still remembers your presence.",
-      image: "/photos/bog_making/video_143.mp4",
+      image: video143,
     },
 
     {
       date: "My First Gift",
       caption:
         "That was the first time I surprised someone from my heart… and your smile that day became a memory I still replay in silence.",
-      image: "/photos/surprise/memory_27.jpg",
+      image: memory27,
     },
 
     {
       date: "Hero Chai",
       caption:
         "This tea shop witnessed every version of us… our laughter, arguments, dreams, fears, love, future plans, and endless conversations over tiny cups of tea. What looked like ordinary evenings to the world became the golden memories of my life.",
-      image: "/photos/hero_chai/hero chai.webp",
+      image: heroChaiWebp,
     },
 
     {
       date: "The Last Day We Met",
       caption: "Some endings never feel like endings at first… until the memories start hurting beautifully.",
-      image: "/photos/surprise/memory_18.jpg",
+      image: memory18,
     },
   ],
   coupons: [
