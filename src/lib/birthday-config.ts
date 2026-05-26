@@ -142,14 +142,14 @@ export const birthdayConfig = {
     ],
     cassetteSongs: [
       {
-        title: "Kannukulla (Reprise)",
-        situation: "A beautiful reprise dedicated just for you",
-        url: "/music/three_songs/kannukulla_reprise.mp3",
+        title: "Mehabooba",
+        situation: "A heartbeat melody that matches your rhythm",
+        url: "/music/three_songs/Mehabooba-MassTamilan.so.mp3",
       },
       {
-        title: "Nallaru Po",
-        situation: "For our classic unplugged vibe",
-        url: "/music/three_songs/nallaru_po.mp3",
+        title: "Unakkul Naane",
+        situation: "A beautiful melody dedicated just for you",
+        url: "/music/three_songs/Unakkul Naane Song.mp3",
       },
       {
         title: "Yedi",
