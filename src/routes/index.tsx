@@ -2,7 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Heart, Sparkles, Gift, ChevronDown, Mail, MailOpen, X, Play, Pause, Volume2, VolumeX, Music } from "lucide-react";
+import {
+  Heart,
+  Sparkles,
+  Gift,
+  ChevronDown,
+  Mail,
+  MailOpen,
+  X,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Music,
+  SkipForward,
+} from "lucide-react";
 import { birthdayConfig } from "@/lib/birthday-config";
 import { Petals, Stars } from "@/components/Petals";
 import petalsBg from "@/assets/petals-bg.jpg";
@@ -36,28 +50,18 @@ function BirthdayPage() {
   const [isPlayingCassette, setIsPlayingCassette] = useState(false);
   const [activeSection, setActiveSection] = useState("welcome");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-
-  // Centralized Audio Loader & playback coordinator
-  useEffect(() => {
-    if (bgAudioRef.current) {
-      bgAudioRef.current.load();
-      if (isPlaying && activeSection !== "soundtrack") {
-        bgAudioRef.current.play()
-          .catch((err) => console.log("Background audio play blocked on switch:", err));
-      }
-    }
-  }, [currentBgSongIndex]);
+  const [deferredMounted, setDeferredMounted] = useState(false);
 
   useEffect(() => {
-    if (cassetteAudioRef.current) {
-      cassetteAudioRef.current.load();
-      if (isPlaying && activeSection === "soundtrack" && isPlayingCassette) {
-        cassetteAudioRef.current.play()
-          .catch((err) => console.log("Cassette audio play blocked on switch:", err));
-      }
+    if (opened) {
+      const timer = setTimeout(() => {
+        setDeferredMounted(true);
+      }, 1500);
+      return () => clearTimeout(timer);
     }
-  }, [currentCassetteIndex]);
+  }, [opened]);
 
+  // Centralized Audio coordinator
   useEffect(() => {
     if (!bgAudioRef.current || !cassetteAudioRef.current) return;
 
@@ -71,21 +75,40 @@ function BirthdayPage() {
       if (activeSection === "soundtrack") {
         bgAudioRef.current.pause();
         if (isPlayingCassette) {
-          cassetteAudioRef.current.play()
+          cassetteAudioRef.current
+            .play()
             .catch((err) => console.log("Cassette audio play blocked:", err));
         } else {
           cassetteAudioRef.current.pause();
         }
       } else {
         cassetteAudioRef.current.pause();
-        bgAudioRef.current.play()
+        bgAudioRef.current
+          .play()
           .catch((err) => console.log("Background audio play blocked:", err));
       }
     }
   }, [isPlaying, isMuted, activeSection, isPlayingCassette, isVideoPlaying]);
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying);
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+    if (nextPlaying) {
+      if (activeSection === "soundtrack") {
+        if (isPlayingCassette && cassetteAudioRef.current) {
+          cassetteAudioRef.current
+            .play()
+            .catch((err) => console.log("Cassette play blocked on toggle:", err));
+        }
+      } else {
+        if (bgAudioRef.current) {
+          bgAudioRef.current.play().catch((err) => console.log("BG play blocked on toggle:", err));
+        }
+      }
+    } else {
+      if (bgAudioRef.current) bgAudioRef.current.pause();
+      if (cassetteAudioRef.current) cassetteAudioRef.current.pause();
+    }
   };
 
   const toggleMute = () => {
@@ -96,8 +119,50 @@ function BirthdayPage() {
     setOpened(true);
     setIsPlaying(true);
     if (bgAudioRef.current) {
-      bgAudioRef.current.play()
-        .catch((err) => console.log("Audio play blocked by browser:", err));
+      bgAudioRef.current.play().catch((err) => console.log("Audio play blocked by browser:", err));
+    }
+  };
+
+  const handleNextTrack = () => {
+    if (activeSection === "soundtrack") {
+      const nextIdx = (currentCassetteIndex + 1) % birthdayConfig.music.cassetteSongs.length;
+      setCurrentCassetteIndex(nextIdx);
+      setIsPlayingCassette(true);
+      setIsPlaying(true);
+      if (cassetteAudioRef.current) {
+        cassetteAudioRef.current.src = birthdayConfig.music.cassetteSongs[nextIdx].url;
+        cassetteAudioRef.current
+          .play()
+          .catch((err) => console.log("Next cassette play blocked:", err));
+      }
+    } else {
+      const nextIdx = (currentBgSongIndex + 1) % birthdayConfig.music.pageSongs.length;
+      setCurrentBgSongIndex(nextIdx);
+      setIsPlaying(true);
+      if (bgAudioRef.current) {
+        bgAudioRef.current.src = birthdayConfig.music.pageSongs[nextIdx].url;
+        bgAudioRef.current.play().catch((err) => console.log("Next bg song play blocked:", err));
+      }
+    }
+  };
+
+  const handleBgEnded = () => {
+    const nextIdx = (currentBgSongIndex + 1) % birthdayConfig.music.pageSongs.length;
+    setCurrentBgSongIndex(nextIdx);
+    if (bgAudioRef.current) {
+      bgAudioRef.current.src = birthdayConfig.music.pageSongs[nextIdx].url;
+      bgAudioRef.current.play().catch((err) => console.log("Bg ended play blocked:", err));
+    }
+  };
+
+  const handleCassetteEnded = () => {
+    const nextIdx = (currentCassetteIndex + 1) % birthdayConfig.music.cassetteSongs.length;
+    setCurrentCassetteIndex(nextIdx);
+    if (cassetteAudioRef.current) {
+      cassetteAudioRef.current.src = birthdayConfig.music.cassetteSongs[nextIdx].url;
+      cassetteAudioRef.current
+        .play()
+        .catch((err) => console.log("Cassette ended play blocked:", err));
     }
   };
 
@@ -123,7 +188,18 @@ function BirthdayPage() {
   useEffect(() => {
     if (!opened) return;
 
-    const sceneIds = ["welcome", "letter", "effort", "timeline", "archive", "soundtrack", "gift", "promise", "finale", "gallery"];
+    const sceneIds = [
+      "welcome",
+      "letter",
+      "effort",
+      "timeline",
+      "archive",
+      "soundtrack",
+      "gift",
+      "promise",
+      "finale",
+      "gallery",
+    ];
     const sceneToSongMap: Record<string, number> = {
       welcome: 0,
       letter: 1,
@@ -138,7 +214,7 @@ function BirthdayPage() {
     };
 
     let observer: IntersectionObserver | null = null;
-    let timer: any;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
     const setupObserver = () => {
       const welcomeEl = document.getElementById("welcome");
@@ -159,7 +235,19 @@ function BirthdayPage() {
 
           const songIdx = sceneToSongMap[sceneId];
           if (songIdx !== undefined && sceneId !== "soundtrack") {
-            setCurrentBgSongIndex(songIdx);
+            setCurrentBgSongIndex((prev) => {
+              if (prev !== songIdx) {
+                if (bgAudioRef.current) {
+                  const wasPlaying = !bgAudioRef.current.paused;
+                  bgAudioRef.current.src = birthdayConfig.music.pageSongs[songIdx].url;
+                  if (wasPlaying) {
+                    bgAudioRef.current.play().catch((err) => console.log("Background audio play blocked on scroll:", err));
+                  }
+                }
+                return songIdx;
+              }
+              return prev;
+            });
           }
         }
       };
@@ -188,7 +276,7 @@ function BirthdayPage() {
         observer.disconnect();
       }
     };
-  }, [opened, allRead]);
+  }, [opened, allRead, deferredMounted]);
 
   // Determine current active playing track title for floating widget
   const getActiveTrackTitle = () => {
@@ -206,13 +294,13 @@ function BirthdayPage() {
       <audio
         ref={bgAudioRef}
         src={birthdayConfig.music.pageSongs[currentBgSongIndex].url}
-        loop
+        onEnded={handleBgEnded}
         style={{ display: "none" }}
       />
       <audio
         ref={cassetteAudioRef}
         src={birthdayConfig.music.cassetteSongs[currentCassetteIndex].url}
-        loop
+        onEnded={handleCassetteEnded}
         style={{ display: "none" }}
       />
       <AnimatePresence mode="wait">
@@ -226,37 +314,57 @@ function BirthdayPage() {
             transition={{ duration: 1.2 }}
           >
             <SceneWelcome />
-            <SceneLetter />
-            <SceneEffort />
-            <SceneTimeline />
-            <SceneUnspokenArchive readLetters={readLetters} onRead={handleReadLetter} />
+            {deferredMounted && (
+              <>
+                <SceneLetter />
+                <SceneEffort />
+                <SceneTimeline />
+                <SceneUnspokenArchive readLetters={readLetters} onRead={handleReadLetter} />
 
-            {allRead && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1 }}
-              >
-                <SceneSoundtrack
-                  isPlayingCassette={isPlayingCassette}
-                  togglePlayCassette={() => {
-                    setIsPlayingCassette(!isPlayingCassette);
-                    setIsPlaying(true);
-                  }}
-                  isMuted={isMuted}
-                  toggleMute={toggleMute}
-                  currentCassetteIndex={currentCassetteIndex}
-                  onSelectCassette={(idx) => {
-                    setCurrentCassetteIndex(idx);
-                    setIsPlayingCassette(true);
-                    setIsPlaying(true);
-                  }}
-                />
-                <SceneGift />
-                <SceneNote />
-                <SceneFinale />
-                <SceneGallery onVideoPlayStateChange={setIsVideoPlaying} />
-              </motion.div>
+                {allRead && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1 }}
+                  >
+                    <SceneSoundtrack
+                      isPlayingCassette={isPlayingCassette}
+                      togglePlayCassette={() => {
+                        const nextPlaying = !isPlayingCassette;
+                        setIsPlayingCassette(nextPlaying);
+                        setIsPlaying(true);
+                        if (cassetteAudioRef.current) {
+                          if (nextPlaying) {
+                            cassetteAudioRef.current
+                              .play()
+                              .catch((err) => console.log("Cassette play blocked on toggle:", err));
+                          } else {
+                            cassetteAudioRef.current.pause();
+                          }
+                        }
+                      }}
+                      isMuted={isMuted}
+                      toggleMute={toggleMute}
+                      currentCassetteIndex={currentCassetteIndex}
+                      onSelectCassette={(idx) => {
+                        setCurrentCassetteIndex(idx);
+                        setIsPlayingCassette(true);
+                        setIsPlaying(true);
+                        if (cassetteAudioRef.current) {
+                          cassetteAudioRef.current.src = birthdayConfig.music.cassetteSongs[idx].url;
+                          cassetteAudioRef.current
+                            .play()
+                            .catch((err) => console.log("Cassette play blocked on select:", err));
+                        }
+                      }}
+                    />
+                    <SceneGift />
+                    <SceneNote />
+                    <SceneFinale />
+                    <SceneGallery onVideoPlayStateChange={setIsVideoPlaying} />
+                  </motion.div>
+                )}
+              </>
             )}
           </motion.div>
         )}
@@ -268,7 +376,9 @@ function BirthdayPage() {
           className="fixed bottom-5 right-5 z-40 flex items-center gap-3 rounded-full border border-[color:var(--gold)]/30 bg-[color:var(--ivory)]/15 p-2 px-4 backdrop-blur shadow-lg cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-[color:var(--ivory)]/25"
           onClick={togglePlay}
         >
-          <div className={`flex items-center text-[color:var(--rose)] ${isPlaying && (activeSection !== "soundtrack" || isPlayingCassette) ? "spinning" : ""}`}>
+          <div
+            className={`flex items-center text-[color:var(--rose)] ${isPlaying && (activeSection !== "soundtrack" || isPlayingCassette) ? "spinning" : ""}`}
+          >
             <Music className="h-4 w-4" />
           </div>
           <span className="text-[10px] tracking-wider uppercase font-semibold text-[color:var(--mauve)] max-w-[120px] truncate">
@@ -277,9 +387,19 @@ function BirthdayPage() {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              handleNextTrack();
+            }}
+            className="border-none bg-transparent text-[color:var(--rose)]/80 hover:text-[color:var(--rose)] cursor-pointer p-0 ml-1 flex items-center"
+            title="Next Track"
+          >
+            <SkipForward className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               toggleMute();
             }}
-            className="border-none bg-transparent text-[color:var(--rose)]/80 hover:text-[color:var(--rose)] cursor-pointer p-0"
+            className="border-none bg-transparent text-[color:var(--rose)]/80 hover:text-[color:var(--rose)] cursor-pointer p-0 ml-1 flex items-center"
           >
             {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </button>
@@ -396,8 +516,7 @@ function SceneWelcome() {
       id="welcome"
       className="relative flex min-h-screen items-center justify-center overflow-hidden text-center"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.95 0.04 10) 0%, oklch(0.92 0.06 350) 100%)",
+        background: "linear-gradient(180deg, oklch(0.95 0.04 10) 0%, oklch(0.92 0.06 350) 100%)",
       }}
     >
       <Stars count={50} />
@@ -406,7 +525,7 @@ function SceneWelcome() {
         <h2 className="mt-4 font-display text-6xl leading-none md:text-9xl">
           <span className="shimmer-text">Happy Birthday</span>
         </h2>
-        <div className="mt-6 flex flex-wrap justify-center gap-2 font-script text-6xl text-[color:var(--mauve)] md:text-8xl">
+        <div className="mt-16 flex flex-wrap justify-center gap-2 font-script text-6xl text-[color:var(--mauve)] md:text-8xl">
           {name.split("").map((c, i) => (
             <motion.span
               key={i}
@@ -443,7 +562,11 @@ function SceneWelcome() {
 /* ===================== Scene 3: Love Letter ===================== */
 function SceneLetter() {
   return (
-    <section id="letter" className="relative overflow-hidden py-32" style={{ background: "var(--ivory)" }}>
+    <section
+      id="letter"
+      className="relative overflow-hidden py-32"
+      style={{ background: "var(--ivory)" }}
+    >
       <div
         className="absolute inset-0 opacity-30"
         style={{
@@ -508,8 +631,9 @@ function SceneLetter() {
   );
 }
 
+const startDate = new Date(birthdayConfig.meetingDate);
+
 function SceneEffort() {
-  const startDate = new Date(birthdayConfig.meetingDate);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [animatedDiffMs, setAnimatedDiffMs] = useState(0);
@@ -529,7 +653,7 @@ function SceneEffort() {
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.15 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -570,7 +694,7 @@ function SceneEffort() {
     return () => clearInterval(timer);
   }, [isAnimating]);
 
-  const diffMs = isAnimating ? animatedDiffMs : (liveNow.getTime() - startDate.getTime());
+  const diffMs = isAnimating ? animatedDiffMs : liveNow.getTime() - startDate.getTime();
 
   // Cumulative values
   const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
@@ -608,13 +732,29 @@ function SceneEffort() {
   };
 
   const currentDate = isAnimating ? new Date(startDate.getTime() + diffMs) : liveNow;
-  const { years, months, days: remainingDays, totalMonths, decimalYears } = getDetailedDifference(startDate, currentDate);
+  const {
+    years,
+    months,
+    days: remainingDays,
+    totalMonths,
+    decimalYears,
+  } = getDetailedDifference(startDate, currentDate);
 
   const formatDate = (date: Date) => {
     const day = date.getDate();
     const monthsNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return `${day} ${monthsNames[date.getMonth()]} ${date.getFullYear()}`;
   };
@@ -630,8 +770,7 @@ function SceneEffort() {
       ref={containerRef}
       className="relative overflow-hidden py-32 text-center"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
+        background: "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
       }}
     >
       <Stars count={70} />
@@ -651,7 +790,7 @@ function SceneEffort() {
             { label: "Days", value: totalDays.toLocaleString() },
             { label: "Hours", value: totalHours.toLocaleString() },
             { label: "Minutes", value: totalMinutes.toLocaleString() },
-            { label: "Seconds", value: totalSeconds.toLocaleString(), isTicking: true }
+            { label: "Seconds", value: totalSeconds.toLocaleString(), isTicking: true },
           ].map((s, i) => (
             <motion.div
               key={i}
@@ -662,11 +801,11 @@ function SceneEffort() {
               className="rounded-2xl border border-[color:var(--gold)]/30 bg-[color:var(--ivory)]/5 p-4 sm:p-6 backdrop-blur flex flex-col justify-center min-h-[140px]"
             >
               <div
-                className={`font-display text-[color:var(--gold)] ${s.isTicking ? 'tabular-nums' : ''} ${s.value.length > 8
-                  ? 'text-xl sm:text-2xl lg:text-3xl xl:text-4xl'
+                className={`font-display text-[color:var(--gold)] ${s.isTicking ? "tabular-nums" : ""} ${s.value.length > 8
+                  ? "text-xl sm:text-2xl lg:text-3xl xl:text-4xl"
                   : s.value.length > 5
-                    ? 'text-2xl sm:text-3xl lg:text-4xl xl:text-5xl'
-                    : 'text-3xl sm:text-4xl lg:text-5xl xl:text-6xl'
+                    ? "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl"
+                    : "text-3xl sm:text-4xl lg:text-5xl xl:text-6xl"
                   }`}
               >
                 {s.value}
@@ -688,9 +827,12 @@ function SceneEffort() {
               transition={{ duration: 0.8 }}
               className="rounded-2xl border border-[color:var(--gold)]/20 bg-[color:var(--ivory)]/5 p-6 backdrop-blur"
             >
-              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">Months</p>
+              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">
+                Months
+              </p>
               <p className="mt-2 font-serif-soft text-2xl text-[color:var(--ivory)] font-medium">
-                ~{totalMonths} month{totalMonths !== 1 ? 's' : ''} and {remainingDays} day{remainingDays !== 1 ? 's' : ''}
+                ~{totalMonths} month{totalMonths !== 1 ? "s" : ""} and {remainingDays} day
+                {remainingDays !== 1 ? "s" : ""}
               </p>
             </motion.div>
 
@@ -701,9 +843,15 @@ function SceneEffort() {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="rounded-2xl border border-[color:var(--gold)]/20 bg-[color:var(--ivory)]/5 p-6 backdrop-blur"
             >
-              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">Years</p>
+              <p className="text-sm uppercase tracking-wider text-[color:var(--blush)]/70 font-serif-soft">
+                Years
+              </p>
               <p className="mt-2 font-serif-soft text-2xl text-[color:var(--ivory)] font-medium">
-                ~{years} year{years !== 1 ? 's' : ''} and {remainingDays} day{remainingDays !== 1 ? 's' : ''} <span className="text-[color:var(--gold)]/80 text-lg font-light">(≈ {decimalYears} years)</span>
+                ~{years} year{years !== 1 ? "s" : ""} and {remainingDays} day
+                {remainingDays !== 1 ? "s" : ""}{" "}
+                <span className="text-[color:var(--gold)]/80 text-lg font-light">
+                  (≈ {decimalYears} years)
+                </span>
               </p>
             </motion.div>
           </div>
@@ -794,7 +942,7 @@ function SceneTimeline() {
         })}
       </div>
       <p className="mt-8 text-center font-hand text-lg text-[color:var(--mauve)]/70">
-        …and so many more to come.
+        Thank you for the love you shared for us
       </p>
     </section>
   );
@@ -843,7 +991,8 @@ function SceneUnspokenArchive({ readLetters, onRead }: SceneUnspokenArchiveProps
           Deep within the heart
         </h3>
         <p className="mt-4 font-serif-soft text-lg text-[color:var(--mauve)]/80">
-          Click to read each envelope. Reveal the final lock when all are read. ({readLetters.length}/{birthdayConfig.secretLetters.length} read)
+          Click to read each envelope. Reveal the final lock when all are read. (
+          {readLetters.length}/{birthdayConfig.secretLetters.length} read)
         </p>
         <div className="gold-divider mx-auto mt-6 w-32" />
 
@@ -862,7 +1011,9 @@ function SceneUnspokenArchive({ readLetters, onRead }: SceneUnspokenArchiveProps
                 className="group relative flex flex-col items-center justify-center rounded-2xl border border-[color:var(--rose)]/25 bg-white/40 p-8 backdrop-blur transition-all duration-300 hover:border-[color:var(--rose)]/60 hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] hover:translate-y-[-4px] cursor-pointer"
               >
                 <div
-                  className={`mb-4 transition-colors duration-300 ${isRead ? "text-[color:var(--gold)]" : "text-[color:var(--rose)] group-hover:text-[color:var(--mauve)]"
+                  className={`mb-4 transition-colors duration-300 ${isRead
+                    ? "text-[color:var(--gold)]"
+                    : "text-[color:var(--rose)] group-hover:text-[color:var(--mauve)]"
                     }`}
                 >
                   {isRead ? <MailOpen className="h-12 w-12" /> : <Mail className="h-12 w-12" />}
@@ -1006,8 +1157,7 @@ function SceneGift() {
       id="gift"
       className="relative overflow-hidden py-32"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.93 0.04 10) 0%, oklch(0.96 0.02 60) 100%)",
+        background: "linear-gradient(180deg, oklch(0.93 0.04 10) 0%, oklch(0.96 0.02 60) 100%)",
       }}
     >
       <div className="mx-auto max-w-6xl px-6 text-center">
@@ -1016,7 +1166,8 @@ function SceneGift() {
           Choose Your Gifts 🎁
         </h3>
         <p className="mt-4 font-serif-soft text-lg text-[color:var(--mauve)]/80 max-w-2xl mx-auto">
-          I have written six special promises for you. Choose **any three** cards and let's see your luck on what you get from me!
+          I have written six special promises for you. Choose **any three** cards and let's see your
+          luck on what you get from me!
         </p>
         <p className="mt-2 font-serif-soft italic font-semibold text-[color:var(--rose)]">
           Selected: {selected.length} / 3
@@ -1045,7 +1196,9 @@ function SceneGift() {
                 >
                   {/* front */}
                   <div
-                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[color:var(--gold)]/60 p-6 [backface-visibility:hidden] transition-shadow duration-300 ${!isDisabled ? "group-hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] group-hover:border-[color:var(--rose)]/50" : ""
+                    className={`absolute inset-0 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[color:var(--gold)]/60 p-6 [backface-visibility:hidden] transition-shadow duration-300 ${!isDisabled
+                      ? "group-hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] group-hover:border-[color:var(--rose)]/50"
+                      : ""
                       }`}
                     style={{
                       background:
@@ -1206,7 +1359,10 @@ function SceneNote() {
           </div>
         </div>
 
-        <p className="mt-6 text-sm uppercase tracking-widest text-[color:var(--gold)]/70 cursor-pointer hover:text-[color:var(--gold)] transition-colors" onClick={handleOpen}>
+        <p
+          className="mt-6 text-sm uppercase tracking-widest text-[color:var(--gold)]/70 cursor-pointer hover:text-[color:var(--gold)] transition-colors"
+          onClick={handleOpen}
+        >
           {isOpened ? "Tap to separate the halves" : "Tap the note to bring the halves together"}
         </p>
 
@@ -1235,7 +1391,6 @@ function SceneNote() {
     </section>
   );
 }
-
 
 /* ===================== Scene 6.5: The Soundtrack of Us ===================== */
 interface SceneSoundtrackProps {
@@ -1266,7 +1421,8 @@ function SceneSoundtrack({
       holeBorder: "var(--rose)",
       textColor: "var(--mauve)",
       glowColor: "rgba(196, 122, 163, 0.45)",
-      badgeColor: "bg-[color:var(--rose)]/25 text-[color:var(--rose)] border-[color:var(--rose)]/30",
+      badgeColor:
+        "bg-[color:var(--rose)]/25 text-[color:var(--rose)] border-[color:var(--rose)]/30",
     },
     {
       name: "gold",
@@ -1278,7 +1434,8 @@ function SceneSoundtrack({
       holeBorder: "var(--gold)",
       textColor: "oklch(0.45 0.08 75)",
       glowColor: "rgba(232, 200, 122, 0.45)",
-      badgeColor: "bg-[color:var(--gold)]/25 text-[color:var(--gold)] border-[color:var(--gold)]/30",
+      badgeColor:
+        "bg-[color:var(--gold)]/25 text-[color:var(--gold)] border-[color:var(--gold)]/30",
     },
     {
       name: "mauve",
@@ -1290,7 +1447,8 @@ function SceneSoundtrack({
       holeBorder: "var(--mauve)",
       textColor: "var(--mauve)",
       glowColor: "rgba(90, 40, 75, 0.45)",
-      badgeColor: "bg-[color:var(--mauve)]/25 text-[color:var(--mauve)] border-[color:var(--mauve)]/30",
+      badgeColor:
+        "bg-[color:var(--mauve)]/25 text-[color:var(--mauve)] border-[color:var(--mauve)]/30",
     },
   ];
 
@@ -1307,8 +1465,7 @@ function SceneSoundtrack({
       id="soundtrack"
       className="relative overflow-hidden py-32 text-center"
       style={{
-        background:
-          "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
+        background: "linear-gradient(180deg, oklch(0.2 0.05 340) 0%, oklch(0.28 0.08 350) 100%)",
       }}
     >
       <Stars count={60} />
@@ -1320,7 +1477,8 @@ function SceneSoundtrack({
           The Soundtrack of Us
         </h3>
         <p className="mt-4 font-serif-soft text-lg text-[color:var(--blush)]/80 max-w-xl mx-auto">
-          Three dedicated cassettes, specifically curated for you. Click any cassette to play its song. Scrolling away will pause the player and restore the background theme music.
+          Three dedicated cassettes, specifically curated for you. Click any cassette to play its
+          song. Scrolling away will pause the player and restore the background theme music.
         </p>
         <div className="gold-divider mx-auto mt-6 w-32" />
 
@@ -1448,7 +1606,11 @@ function SceneSoundtrack({
                     <span
                       className={`text-[10px] tracking-wider uppercase font-bold px-3 py-1 rounded-full border ${theme.badgeColor}`}
                     >
-                      {isCurrentPlaying ? "🔊 Playing" : isSelected ? "⏸️ Selected" : "🎵 Dedication"}
+                      {isCurrentPlaying
+                        ? "🔊 Playing"
+                        : isSelected
+                          ? "⏸️ Selected"
+                          : "🎵 Dedication"}
                     </span>
                   </div>
                   <h4 className="font-display text-lg text-[color:var(--ivory)] font-semibold">
@@ -1520,7 +1682,7 @@ function SceneFinale() {
     <section
       id="finale"
       ref={ref}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden py-24 text-center"
+      className="relative flex h-screen items-center justify-center overflow-hidden py-12 text-center"
       style={{
         backgroundImage: `linear-gradient(180deg, rgba(28,10,30,.85), rgba(60,20,55,.85)), url(${starsBg})`,
         backgroundSize: "cover",
@@ -1530,22 +1692,22 @@ function SceneFinale() {
       <Stars count={80} />
       <Petals count={10} />
 
-      <motion.div className="relative z-10 mx-auto max-w-3xl px-6">
-        <p className="font-hand text-2xl text-[color:var(--gold)]">Make a wish</p>
-        <h3 className="mt-2 font-display text-5xl text-[color:var(--ivory)] md:text-7xl">
+      <motion.div className="relative z-10 mx-auto max-w-3xl px-6 flex flex-col items-center justify-center h-full max-h-[90vh]">
+        <p className="font-hand text-xl text-[color:var(--gold)]">Make a wish</p>
+        <h3 className="mt-2 font-display text-4xl text-[color:var(--ivory)] md:text-6xl leading-tight">
           <span className="shimmer-text">Happy Birthday</span>
         </h3>
-        <p className="mt-1 font-script text-5xl text-[color:var(--blush)] md:text-7xl">
+        <p className="mt-6 font-script text-5xl text-[color:var(--blush)] md:text-6xl leading-none">
           {birthdayConfig.herName}
         </p>
 
-        <div className="relative mx-auto mt-10 w-[280px] md:w-[360px]">
+        <div className="relative mx-auto mt-6 w-[200px] md:w-[260px] transition-all duration-300">
           <img
             src={cake}
             alt="A pink birthday cake with candles"
             width={768}
             height={768}
-            style={{ filter: "drop-shadow(0 20px 30px rgba(232,200,122,.35))" }}
+            style={{ filter: "drop-shadow(0 15px 25px rgba(232,200,122,.35))" }}
           />
           {/* clickable candle hot-spots */}
           <div className="absolute inset-0 pointer-events-none">
@@ -1570,11 +1732,11 @@ function SceneFinale() {
                 >
                   {lit && (
                     <span
-                      className="candle-flame block h-7 w-3.5 rounded-full"
+                      className="candle-flame block h-6 w-3 rounded-full"
                       style={{
                         background:
                           "radial-gradient(circle at 50% 60%, #fff7c2 0%, #ffd24c 50%, #ff7a3a 100%)",
-                        boxShadow: "0 0 18px #ffb84d, 0 0 36px #ff7a3a",
+                        boxShadow: "0 0 14px #ffb84d, 0 0 28px #ff7a3a",
                       }}
                     />
                   )}
@@ -1584,16 +1746,16 @@ function SceneFinale() {
           </div>
         </div>
 
-        <p className="mt-3 text-sm uppercase tracking-widest text-[color:var(--blush)]/70">
+        <p className="mt-3 text-xs uppercase tracking-widest text-[color:var(--blush)]/70">
           Tap the flames to blow them out
         </p>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 1 }}
-          className="mx-auto mt-12 max-w-2xl font-serif-soft text-2xl italic text-[color:var(--ivory)]/90 md:text-3xl"
+          className="mx-auto mt-8 max-w-xl font-serif-soft text-lg md:text-xl italic text-[color:var(--ivory)]/90"
         >
           {birthdayConfig.birthdayMessage}
         </motion.p>
@@ -1607,7 +1769,7 @@ function GalleryVideoCard({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [loaded, setLoaded] = useState(false);
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
-  const outTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -1617,33 +1779,42 @@ function GalleryVideoCard({ src }: { src: string }) {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Clear any pending removal
-            if (outTimer.current) clearTimeout(outTimer.current);
             // Load src only when needed
             if (!activeSrc) setActiveSrc(src);
-            el.play().catch(() => { });
           } else {
-            el.pause();
-            // After 500ms out of viewport, clear src to release GPU memory
-            outTimer.current = setTimeout(() => {
-              setActiveSrc(null);
-              setLoaded(false);
-            }, 500);
+            if (videoRef.current) {
+              videoRef.current.pause();
+            }
+            setIsHovered(false);
           }
         });
       },
-      { rootMargin: "100px 0px", threshold: 0.15 }
+      { rootMargin: "200px 0px", threshold: 0.01 },
     );
 
     observer.observe(el);
     return () => {
       observer.disconnect();
-      if (outTimer.current) clearTimeout(outTimer.current);
     };
   }, [src, activeSrc]);
 
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !activeSrc) return;
+
+    if (isHovered) {
+      el.play().catch(() => { });
+    } else {
+      el.pause();
+    }
+  }, [isHovered, activeSrc]);
+
   return (
-    <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black">
+    <div
+      className="relative w-full h-full overflow-hidden flex items-center justify-center bg-black"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
           <div className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -1655,11 +1826,64 @@ function GalleryVideoCard({ src }: { src: string }) {
         muted
         loop
         playsInline
+        preload="metadata"
         onLoadedData={() => setLoaded(true)}
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
       <div className="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-        <span className="font-hand text-sm text-white drop-shadow">Tap to open ♡</span>
+        <span className="font-hand text-sm text-white drop-shadow">
+          Hover to play / Tap to open ♡
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const friendsGlob = import.meta.glob('/public/photos/friends/*', { eager: true });
+const heroChaiGlob = import.meta.glob('/public/photos/hero_chai/*', { eager: true });
+const midnightTalksGlob = import.meta.glob('/public/photos/midnight_talks/*', { eager: true });
+const bogMakingGlob = import.meta.glob('/public/photos/bog_making/*', { eager: true });
+const surpriseGlob = import.meta.glob('/public/photos/surprise/*', { eager: true });
+
+const getPublicPaths = (globResult: Record<string, any>) => {
+  return Object.keys(globResult).map((path, idx) => {
+    const cleanPath = path.startsWith('/public') ? path.replace('/public', '') : path;
+    const isVideo = cleanPath.toLowerCase().endsWith('.mp4') || cleanPath.toLowerCase().endsWith('.webm');
+    return {
+      originalIndex: idx,
+      type: isVideo ? ('video' as const) : ('photo' as const),
+      url: cleanPath,
+      aspectRatio: isVideo ? 1.778 : undefined
+    };
+  });
+};
+
+function GalleryPhotoCard({ src }: { src: string }) {
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+
+  return (
+    <div 
+      className="relative rounded overflow-hidden bg-[#ebdcb4]/20 flex items-center justify-center w-full shadow-inner"
+      style={{
+        aspectRatio: aspectRatio 
+          ? (aspectRatio < 1 ? 0.75 : 1.333) 
+          : 1.333 // default to 4:3 while loading
+      }}
+    >
+      <img
+        src={src}
+        alt="Memory"
+        loading="lazy"
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          if (img.naturalWidth && img.naturalHeight) {
+            setAspectRatio(img.naturalWidth / img.naturalHeight);
+          }
+        }}
+        className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+      />
+      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+        <Heart className="h-6 w-6 text-[color:var(--rose)]/80 animate-pulse" />
       </div>
     </div>
   );
@@ -1671,105 +1895,323 @@ interface SceneGalleryProps {
 }
 
 function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
-  const [active, setActive] = useState<number | null>(null);
-  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    birthdayConfig.galleryItems.forEach((item) => {
-      if (item.type === "photo") {
-        const img = new Image();
-        img.src = item.url;
-        img.onload = () => {
-          setAspectRatios((prev) => ({
-            ...prev,
-            [item.url]: img.naturalWidth / img.naturalHeight,
-          }));
-        };
-      } else {
-        const vid = document.createElement("video");
-        vid.src = item.url;
-        vid.preload = "metadata";
-        vid.onloadedmetadata = () => {
-          setAspectRatios((prev) => ({
-            ...prev,
-            [item.url]: vid.videoWidth / vid.videoHeight,
-          }));
-        };
-      }
-    });
-  }, []);
+  const [activeItem, setActiveItem] = useState<any | null>(null);
+  const [openVolume, setOpenVolume] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleClose = () => {
-    setActive(null);
+    setActiveItem(null);
     onVideoPlayStateChange?.(false);
   };
 
-  const activeItem = active !== null ? birthdayConfig.galleryItems[active] : null;
+  // Categorize items dynamically into leather books
+  const volumes = [
+    {
+      id: "friends",
+      title: "Volume I: Friends & Laughter",
+      subtitle: "Friends",
+      tabLabel: "Friends",
+      description: "Golden days with friends, college memories, and shared smiles.",
+      themeSpine: "spine-burgundy",
+      textColor: "text-[#ffd6e0]",
+      glowColor: "rgba(107, 29, 51, 0.4)",
+      items: getPublicPaths(friendsGlob),
+    },
+    {
+      id: "hero_chai",
+      title: "Volume II: Conversations over Chai",
+      subtitle: "Hero chai",
+      tabLabel: "Hero chai",
+      description: "Every version of us, tea shop diaries, and endless cups of tea.",
+      themeSpine: "spine-green",
+      textColor: "text-[#d8f3dc]",
+      glowColor: "rgba(34, 77, 58, 0.4)",
+      items: getPublicPaths(heroChaiGlob),
+    },
+    {
+      id: "midnight_talks",
+      title: "Volume III: Late Night Chronicles",
+      subtitle: "Midnight talks",
+      tabLabel: "Midnight talks",
+      description: "Midnight conversations, shared thoughts, and screen captures of us.",
+      themeSpine: "spine-navy",
+      textColor: "text-[#d0dbf5]",
+      glowColor: "rgba(24, 43, 92, 0.4)",
+      items: getPublicPaths(midnightTalksGlob),
+    },
+    {
+      id: "bog_making",
+      title: "Volume IV: Behind The Scenes",
+      subtitle: "BOG making",
+      tabLabel: "BOG making",
+      description: "Laughter, voice notes, live motion recordings, and candid video logs.",
+      themeSpine: "spine-gold",
+      textColor: "text-[#fff2d4]",
+      glowColor: "rgba(232, 200, 122, 0.4)",
+      items: getPublicPaths(bogMakingGlob),
+    },
+    {
+      id: "surprise",
+      title: "Volume V: Sweet Discoveries",
+      subtitle: "Surprise",
+      tabLabel: "Surprise",
+      description: "Cute snaps, unexpected captures, and beautiful frames of you.",
+      themeSpine: "spine-purple",
+      textColor: "text-[#e8d5f5]",
+      glowColor: "rgba(128, 90, 213, 0.4)",
+      items: getPublicPaths(surpriseGlob),
+    },
+  ];
+
+  const currentVolume = openVolume !== null ? volumes[openVolume] : null;
+
+  const filteredItems = currentVolume
+    ? currentVolume.items.filter((item) => {
+      const filename = item.url.split("/").pop()?.toLowerCase() || "";
+      const refCode = `ref-vol${openVolume! + 1}-crd${item.originalIndex + 1}`;
+      const query = searchQuery.toLowerCase();
+      return filename.includes(query) || refCode.includes(query);
+    })
+    : [];
+
   const isVideo = activeItem?.type === "video";
 
   return (
-    <section id="gallery" className="relative py-32" style={{ background: "var(--ivory)" }}>
+    <section id="gallery" className="relative py-32 animate-fade-in" style={{ background: "var(--ivory)" }}>
+      {/* Background Petals/Stars decor */}
+      <Stars count={35} />
+
       <div className="mx-auto max-w-6xl px-6 text-center">
         <p className="font-hand text-2xl text-[color:var(--rose)]">Forever page</p>
         <h3 className="mt-2 font-display text-5xl text-[color:var(--mauve)] md:text-6xl">
-          Every moment with you is my favorite
+          The Memory Library
         </h3>
         <div className="gold-divider mx-auto mt-6 w-32" />
-        <p className="mt-4 font-serif-soft italic text-[color:var(--mauve)]/70">
-          Come back here anytime, Sri. This page belongs to you.
+        <p className="mt-4 font-serif-soft italic text-[color:var(--mauve)]/70 max-w-2xl mx-auto">
+          Welcome to our private archive. Every photo, screenshot, and video has been filed, bound, and cataloged. Select a volume from the shelf to open.
         </p>
       </div>
 
-      <div className="mx-auto mt-16 max-w-6xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-6 grid-flow-row-dense auto-rows-[180px] md:auto-rows-[220px]">
-        {birthdayConfig.galleryItems.map((item, i) => {
-          const isItemVideo = item.type === "video";
-          const ar = aspectRatios[item.url];
-
-          let spanClass = "col-span-1 row-span-1"; // default standard block
-          if (ar) {
-            if (ar < 0.8) {
-              spanClass = "col-span-1 row-span-2"; // Portrait (tall) building block
-            } else if (ar > 1.35) {
-              spanClass = "col-span-2 row-span-1"; // Landscape (wide) building block
-            }
-          }
-
-          return (
-            <motion.button
-              key={i}
+      <div className="mx-auto mt-16 max-w-5xl px-6">
+        <AnimatePresence mode="wait">
+          {openVolume === null ? (
+            /* ===================== The Bookshelf View ===================== */
+            <motion.div
+              key="shelf"
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: (i % 4) * 0.05 }}
-              onClick={() => setActive(i)}
-              className={`group overflow-hidden rounded-xl border border-[color:var(--gold)]/10 bg-white/20 p-2 backdrop-blur hover:border-[color:var(--rose)]/40 transition-all duration-300 hover:shadow-[0_15px_30px_rgba(196,122,163,0.15)] cursor-pointer flex flex-col items-stretch justify-stretch ${spanClass}`}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center"
             >
-              <div className="relative overflow-hidden rounded-lg bg-black/5 w-full h-full flex flex-col justify-stretch items-stretch">
-                {isItemVideo ? (
-                  <GalleryVideoCard src={item.url} />
-                ) : (
-                  <img
-                    src={item.url}
-                    alt={`Memory photo ${i + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                )}
+              {/* Virtual Shelf */}
+              <div className="w-full max-w-3xl rounded-lg bookshelf-container p-8 md:p-12 flex justify-center items-end gap-3 md:gap-6 min-h-[360px] flex-wrap md:flex-nowrap">
+                <div className="bookshelf-shadow" />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 z-10">
-                  <div className="flex items-center gap-2 text-white">
-                    <Heart className="h-4 w-4 fill-white text-white" />
-                    <span className="font-hand text-sm">{isItemVideo ? "Play Video" : "View Memory"}</span>
-                  </div>
+                {volumes.map((vol, idx) => (
+                  <motion.div
+                    key={vol.id}
+                    className={`book-spine ${vol.themeSpine} flex flex-col justify-between items-center py-6 px-2`}
+                    whileHover={{
+                      y: -15,
+                      rotate: -4,
+                      scale: 1.04,
+                      boxShadow: `0 25px 35px rgba(0,0,0,0.6), 0 0 20px ${vol.glowColor}`
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setOpenVolume(idx)}
+                  >
+                    {/* Gold Book Label (Top) */}
+                    <div className="w-1.5 h-6 bg-[color:var(--gold)] rounded-sm opacity-80" />
+
+                    {/* Book Spine Title (Rotated) */}
+                    <div
+                      className={`font-display text-[10px] md:text-sm font-bold tracking-widest ${vol.textColor} uppercase select-none whitespace-nowrap`}
+                      style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+                    >
+                      {vol.subtitle}
+                    </div>
+
+                    {/* Volume Label (Bottom) */}
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] font-mono tracking-widest text-[color:var(--gold)]/80 uppercase">
+                        VOL. {idx + 1}
+                      </span>
+                      <div className="w-4 h-1 bg-[color:var(--gold)]/40 mt-1" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Shelf Description Details */}
+              <div className="mt-8 text-center max-w-2xl px-6">
+                <p className="text-xs uppercase tracking-widest text-[color:var(--mauve)]/50 font-bold mb-2">
+                  Library Catalog Index
+                </p>
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-[11px] font-serif-soft italic text-[color:var(--foreground)]/70">
+                  {volumes.map((vol, idx) => (
+                    <div key={vol.id} className="cursor-pointer hover:text-[color:var(--rose)] transition" onClick={() => setOpenVolume(idx)}>
+                      <span className="font-bold text-[color:var(--gold)] block not-italic">VOL. {idx + 1}</span>
+                      {vol.subtitle}
+                    </div>
+                  ))}
                 </div>
               </div>
-            </motion.button>
-          );
-        })}
+            </motion.div>
+          ) : (
+            /* ===================== The Opened Scrapbook View ===================== */
+            <motion.div
+              key="book-content"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.5 }}
+              className="w-full bg-[#fdfbf7] border border-[#e8dfc7] rounded-xl p-6 md:p-10 shadow-2xl relative"
+            >
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none rounded-xl" style={{ backgroundImage: `url(${parchment})`, backgroundSize: "cover" }} />
+
+              {/* Book Header / Reading Desk Controls */}
+              <div className="flex flex-col md:flex-row items-center justify-between border-b border-dashed border-[#e3d7b9] pb-6 gap-6 relative z-10">
+                <button
+                  onClick={() => {
+                    setOpenVolume(null);
+                    setSearchQuery("");
+                  }}
+                  className="flex items-center gap-2 rounded-full border border-[#d2c49e] bg-white/60 px-5 py-2 text-xs font-serif-soft italic text-[#5c4033] hover:bg-[#ebdcb4] hover:text-[#3d2b1f] transition cursor-pointer"
+                >
+                  ← Return to Shelf
+                </button>
+
+                <div className="text-center">
+                  <span className="text-[10px] tracking-wider font-mono font-bold text-[color:var(--gold)] uppercase block mb-1">
+                    Reading Desk: Volume {openVolume + 1}
+                  </span>
+                  <h4 className="font-display text-2xl md:text-3xl text-[#3d2b1f] font-semibold">
+                    {currentVolume?.title}
+                  </h4>
+                  <p className="font-serif-soft text-xs italic text-[#5c4033]/70 mt-1 max-w-md">
+                    {currentVolume?.description}
+                  </p>
+                </div>
+
+                {/* Library Catalog Drawer Search Bar */}
+                <div className="relative w-full md:w-60">
+                  <input
+                    type="text"
+                    placeholder="Search Catalog..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-md border border-[#c2b48f] bg-[#fbf9f3] px-3 py-2 text-xs text-[#3d2b1f] placeholder-[#a69772] shadow-inner focus:outline-none focus:ring-1 focus:ring-[#8e2b45] font-serif-soft"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#a69772] hover:text-[#3d2b1f]"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Volume Tabs */}
+              <div className="flex justify-center gap-2 mt-4 relative z-10 border-b border-[#ebdcb4]/30 pb-2 flex-wrap">
+                {volumes.map((vol, idx) => (
+                  <button
+                    key={vol.id}
+                    onClick={() => {
+                      setOpenVolume(idx);
+                      setSearchQuery("");
+                    }}
+                    className={`px-3 py-1.5 md:px-5 md:py-2 rounded-t-md text-[10px] md:text-xs uppercase font-bold tracking-wider transition cursor-pointer border-t border-x ${idx === openVolume
+                      ? "bg-[#fcfaf5] text-[#8e2b45] border-[#c2b48f]"
+                      : "bg-transparent text-[#a69772] border-transparent hover:text-[#8e2b45] hover:bg-[#ebdcb4]/10"
+                      }`}
+                  >
+                    {vol.tabLabel}
+                  </button>
+                ))}
+              </div>
+
+              {/* Grid of Catalog Cards */}
+              {filteredItems.length > 0 ? (
+                <div 
+                  className={
+                    currentVolume?.id === "friends" || currentVolume?.id === "hero_chai"
+                      ? "mt-8 columns-1 sm:columns-2 md:columns-3 gap-6 relative z-10"
+                      : "mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-start relative z-10"
+                  }
+                >
+                  {filteredItems.map((item) => {
+                    const isItemVideo = item.type === "video";
+                    const isMasonry = currentVolume?.id === "friends" || currentVolume?.id === "hero_chai";
+                    return (
+                      <motion.div
+                        key={item.originalIndex}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4 }}
+                        onClick={() => setActiveItem(item)}
+                        className={`library-card group cursor-pointer p-3 flex flex-col justify-between hover:translate-y-[-4px] hover:shadow-[0_12px_24px_rgba(90,40,75,0.12)] border border-[#ebdcb4] ${
+                          isMasonry ? "break-inside-avoid mb-6" : ""
+                        }`}
+                      >
+                        {/* Catalog Header Index Label */}
+                        <div className="flex justify-between items-center border-b border-[#e8dfc7] pb-2 mb-3">
+                          <span className="text-[9px] font-mono text-[#a69772] font-semibold tracking-wider">
+                            REF: V{openVolume! + 1}-C{item.originalIndex + 1}
+                          </span>
+                          <span className="library-stamp">Archived</span>
+                        </div>
+
+                        {/* Card Image Area */}
+                        {isItemVideo ? (
+                          <div 
+                            className="relative rounded overflow-hidden bg-[#ebdcb4]/20 flex items-center justify-center w-full shadow-inner"
+                            style={{ aspectRatio: item.aspectRatio || 1.778 }}
+                          >
+                            <GalleryVideoCard src={item.url} />
+                            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                              <Heart className="h-6 w-6 text-[color:var(--rose)]/80 animate-pulse" />
+                            </div>
+                          </div>
+                        ) : (
+                          <GalleryPhotoCard src={item.url} />
+                        )}
+
+                        {/* Card Footer Detail */}
+                        <div className="mt-3 flex justify-between items-center">
+                          <div className="text-left max-w-[80%]">
+                            <p className="font-serif-soft text-xs text-[#3d2b1f] font-semibold truncate">
+                              {item.url.split("/").pop() || "Memory Card"}
+                            </p>
+                            <span className="font-hand text-[10px] text-[#a69772] italic block mt-0.5">
+                              {isItemVideo ? "Live recorded motion" : "Captured photo snap"}
+                            </span>
+                          </div>
+                          <div className="w-6 h-6 rounded-full bg-[#f3ede0] border border-[#d2c49e] flex items-center justify-center text-[#5c4033] hover:bg-[#8e2b45] hover:text-white transition">
+                            <Heart className="h-3 w-3 fill-current" />
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-20 text-center relative z-10">
+                  <p className="font-serif-soft italic text-[#a69772]">
+                    No archive files match your catalog search.
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
-        {active !== null && activeItem && (
+        {activeItem && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1785,7 +2227,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-xl rounded-xl bg-white p-4 md:p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] border border-white/20"
               style={{
-                boxShadow: "0 25px 60px -15px rgba(0,0,0,0.7)"
+                boxShadow: "0 25px 60px -15px rgba(0,0,0,0.7)",
               }}
             >
               {/* Close button inside modal */}
@@ -1798,7 +2240,10 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
               </button>
 
               {/* Media Area */}
-              <div className="relative overflow-hidden rounded-lg bg-neutral-900 shadow-inner flex items-center justify-center" style={{ maxHeight: "70vh" }}>
+              <div
+                className="relative overflow-hidden rounded-lg bg-neutral-900 shadow-inner flex items-center justify-center"
+                style={{ maxHeight: "70vh" }}
+              >
                 {isVideo ? (
                   <video
                     src={activeItem.url}
@@ -1813,7 +2258,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
                 ) : (
                   <img
                     src={activeItem.url}
-                    alt={`Memory ${active + 1}`}
+                    alt="Memory"
                     className="w-full h-auto max-h-[60vh] object-contain rounded-sm"
                   />
                 )}
@@ -1823,17 +2268,25 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
               <div className="mt-4 md:mt-6 flex flex-col md:flex-row items-center justify-between gap-4 px-2">
                 <div className="text-center md:text-left">
                   <p className="font-hand text-2xl text-[color:var(--mauve)]">
-                    {isVideo ? `Video #${active + 1}` : `Memory #${active + 1}`}
+                    {isVideo ? "Video Clip" : "Memory Snap"}
                   </p>
                   <p className="font-serif-soft text-xs text-[color:var(--foreground)]/60 mt-1 uppercase tracking-wider">
-                    {activeItem.url.split('/').pop()?.replace('_', ' #').replace('.mp4', '').replace('.jpg', '')}
+                    {activeItem.url
+                      .split("/")
+                      .pop()
+                      ?.replace("_", " ")
+                      .replace("-", " ")
+                      .replace(".mp4", "")
+                      .replace(".jpg", "")
+                      .replace(".png", "")
+                      .replace(".webp", "")}
                   </p>
                 </div>
 
                 {/* Download / Save Button */}
                 <a
                   href={activeItem.url}
-                  download={isVideo ? `sri-video-${active + 1}.mp4` : `sri-memory-${active + 1}.jpg`}
+                  download={activeItem.url.split("/").pop()}
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center gap-2 rounded-full bg-[color:var(--rose)] px-5 py-2 text-sm font-medium text-white hover:bg-[color:var(--mauve)] transition shadow-[0_4px_12px_rgba(196,122,163,0.3)] cursor-pointer"
                 >
@@ -1858,4 +2311,3 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
     </section>
   );
 }
-

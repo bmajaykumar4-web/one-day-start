@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
-export function CountUp({ to, duration = 1800, suffix = "" }: { to: number; duration?: number; suffix?: string }) {
+export function CountUp({
+  to,
+  duration = 1800,
+  suffix = "",
+}: {
+  to: number;
+  duration?: number;
+  suffix?: string;
+}) {
   const [n, setN] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   const started = useRef(false);

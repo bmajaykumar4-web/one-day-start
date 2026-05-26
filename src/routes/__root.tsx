@@ -73,17 +73,44 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Happy Birthday Sri" },
-      { name: "description", content: "Build your web application in a single day with this starter kit." },
+      {
+        name: "description",
+        content: "Build your web application in a single day with this starter kit.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Happy Birthday Sri" },
-      { property: "og:description", content: "Build your web application in a single day with this starter kit." },
+      {
+        property: "og:description",
+        content: "Build your web application in a single day with this starter kit.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Happy Birthday Sri" },
-      { name: "twitter:description", content: "Build your web application in a single day with this starter kit." },
+      {
+        name: "twitter:description",
+        content: "Build your web application in a single day with this starter kit.",
+      },
     ],
     links: [
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/favicon.png",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;1,400&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

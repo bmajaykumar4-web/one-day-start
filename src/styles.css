@@ -1,6 +1,5 @@
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Lora:ital,wght@0,400;1,400&display=swap");
 
 @source "../src";
 @custom-variant dark (&:is(.dark *));
@@ -62,51 +61,115 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-body);
-    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='%23d6336c'><path d='M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z'/></svg>") 14 14, auto;
+    cursor:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='%23d6336c'><path d='M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z'/></svg>")
+        14 14,
+      auto;
   }
-  a, button { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='%23E8C87A'><path d='M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z'/></svg>") 16 16, pointer; }
+  a,
+  button {
+    cursor:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='%23E8C87A'><path d='M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z'/></svg>")
+        16 16,
+      pointer;
+  }
 }
 
 /* ===== Petal / sparkle keyframes ===== */
 @keyframes fall {
-  0% { transform: translate3d(0,-10vh,0) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translate3d(20px,110vh,0) rotate(360deg); opacity: 0; }
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(20px, 110vh, 0) rotate(360deg);
+    opacity: 0;
+  }
 }
 @keyframes twinkle {
-  0%,100% { opacity: .2; transform: scale(.8); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 @keyframes float-soft {
-  0%,100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
 }
 @keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
 }
 @keyframes pulse-heart {
-  0%,100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
 }
 @keyframes flicker {
-  0%,100% { transform: scale(1) translateY(0); opacity: 1; }
-  50% { transform: scale(1.06) translateY(-1px); opacity: .9; }
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06) translateY(-1px);
+    opacity: 0.9;
+  }
 }
 
-.font-display { font-family: var(--font-display); }
-.font-script { font-family: var(--font-script); }
-.font-hand { font-family: var(--font-hand); }
-.font-serif-soft { font-family: var(--font-serif-soft); }
+.font-display {
+  font-family: var(--font-display);
+}
+.font-script {
+  font-family: var(--font-script);
+}
+.font-hand {
+  font-family: var(--font-hand);
+}
+.font-serif-soft {
+  font-family: var(--font-serif-soft);
+}
 
 .shimmer-text {
-  background: linear-gradient(90deg, var(--rose), var(--gold), var(--mauve), var(--gold), var(--rose));
+  background: linear-gradient(
+    90deg,
+    var(--rose),
+    var(--gold),
+    var(--mauve),
+    var(--gold),
+    var(--rose)
+  );
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -117,33 +180,39 @@
 .petal {
   position: absolute;
   top: 0;
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   background: radial-gradient(circle at 30% 30%, #ffd6e0 0%, #f2a7bb 60%, #c47aa3 100%);
   border-radius: 150% 0 150% 0;
-  filter: drop-shadow(0 2px 4px rgba(196, 122, 163, .35));
+  filter: drop-shadow(0 2px 4px rgba(196, 122, 163, 0.35));
   animation: fall linear infinite;
   pointer-events: none;
 }
 
 .star-dot {
   position: absolute;
-  width: 3px; height: 3px;
+  width: 3px;
+  height: 3px;
   background: #fff;
   border-radius: 50%;
-  box-shadow: 0 0 6px #fff, 0 0 12px #E8C87A;
+  box-shadow:
+    0 0 6px #fff,
+    0 0 12px #e8c87a;
   animation: twinkle 3s ease-in-out infinite;
 }
 
 .paper-texture {
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(196,122,163,.06), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(232,200,122,.08), transparent 40%);
+    radial-gradient(circle at 20% 30%, rgba(196, 122, 163, 0.06), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(232, 200, 122, 0.08), transparent 40%);
 }
 
 .polaroid {
   background: #fff;
   padding: 12px 12px 48px;
-  box-shadow: 0 10px 30px -10px rgba(196, 122, 163, .35), 0 2px 6px rgba(0,0,0,.06);
+  box-shadow:
+    0 10px 30px -10px rgba(196, 122, 163, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.06);
   border-radius: 4px;
 }
 
@@ -153,28 +222,39 @@
 }
 
 .btn-romance {
-  display: inline-flex; align-items: center; gap: .6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   padding: 1rem 2.2rem;
   font-family: var(--font-display);
   font-size: 1.05rem;
-  letter-spacing: .05em;
+  letter-spacing: 0.05em;
   color: var(--ivory);
   background: linear-gradient(135deg, var(--rose), var(--mauve));
   border-radius: 999px;
   box-shadow: 0 10px 30px -8px color-mix(in oklab, var(--mauve) 60%, transparent);
-  transition: transform .3s ease, box-shadow .3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
-.btn-romance:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 18px 40px -10px color-mix(in oklab, var(--mauve) 70%, transparent); }
+.btn-romance:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 18px 40px -10px color-mix(in oklab, var(--mauve) 70%, transparent);
+}
 
 .candle-flame {
-  animation: flicker .4s ease-in-out infinite;
+  animation: flicker 0.4s ease-in-out infinite;
   transform-origin: bottom center;
 }
 
 /* ===== Cassette Player Styles ===== */
 @keyframes spin-slow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .cassette-shell {
@@ -183,7 +263,9 @@
   background: linear-gradient(135deg, oklch(0.2 0.05 340) 0%, oklch(0.12 0.03 340) 100%);
   border-radius: 12px;
   border: 4px solid var(--rose);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 30px rgba(196, 122, 163, 0.2);
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(196, 122, 163, 0.2);
   position: relative;
   padding: 12px;
   display: flex;
@@ -317,3 +399,115 @@
   transform: translateY(1px);
 }
 
+/* ===== Virtual Bookshelf & Library Styles ===== */
+.bookshelf-container {
+  background: linear-gradient(180deg, #3d2314 0%, #201007 100%);
+  border-bottom: 24px solid #5a3825;
+  box-shadow: 
+    0 10px 0 #180c05,
+    inset 0 -15px 30px rgba(0,0,0,0.6),
+    0 30px 40px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.bookshelf-shadow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.book-spine {
+  width: 70px;
+  height: 280px;
+  border-radius: 4px 10px 10px 4px;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  cursor: pointer;
+  box-shadow: 
+    5px 5px 15px rgba(0,0,0,0.5),
+    inset 4px 0 8px rgba(255,255,255,0.1),
+    inset -4px 0 8px rgba(0,0,0,0.4);
+  transform-origin: bottom center;
+}
+
+.book-spine::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  width: 2px;
+  background: rgba(255,255,255,0.08);
+  box-shadow: 1px 0 0 rgba(0,0,0,0.3);
+}
+
+.spine-burgundy {
+  background: linear-gradient(90deg, #4a1525 0%, #6b1d33 20%, #4a1525 60%, #2b0b14 100%);
+  border-left: 2px solid #8e2b45;
+  border-right: 2px solid #2b0b14;
+}
+
+.spine-green {
+  background: linear-gradient(90deg, #153225 0%, #224d3a 20%, #153225 60%, #0d1e16 100%);
+  border-left: 2px solid #337357;
+  border-right: 2px solid #0d1e16;
+}
+
+.spine-navy {
+  background: linear-gradient(90deg, #0f1c3f 0%, #182b5c 20%, #0f1c3f 60%, #080f24 100%);
+  border-left: 2px solid #254080;
+  border-right: 2px solid #080f24;
+}
+
+.spine-gold {
+  background: linear-gradient(90deg, #5c4314 0%, #87621d 20%, #5c4314 60%, #30230a 100%);
+  border-left: 2px solid #c9932b;
+  border-right: 2px solid #30230a;
+}
+
+.spine-purple {
+  background: linear-gradient(90deg, #2b143c 0%, #431f5e 20%, #2b143c 60%, #170b21 100%);
+  border-left: 2px solid #6b3096;
+  border-right: 2px solid #170b21;
+}
+
+.library-card {
+  background: #f7f2e8;
+  border: 1px solid #e2dac6;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.05),
+    0 10px 20px rgba(196,122,163,0.08);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.library-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--rose));
+}
+
+.library-stamp {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #c25c7e;
+  border: 2px dashed #c25c7e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.6;
+  transform: rotate(-8deg);
+  display: inline-block;
+}
