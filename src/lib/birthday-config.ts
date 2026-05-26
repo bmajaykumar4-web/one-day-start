@@ -24,12 +24,35 @@ export const birthdayConfig = {
     { date: "Today", caption: "And every day after this one. I promise.", image: "/photos/memory_18.jpg" },
   ],
   coupons: [
-    { title: "One Movie Night", note: "Your pick. Snacks on me." },
-    { title: "One Surprise Date", note: "Planned entirely by me. Just say yes." },
-    { title: "One Royal Day", note: "You choose everything. I obey. 👑" },
-    { title: "Breakfast in Bed", note: "Redeem any lazy Sunday." },
-    { title: "Endless Hugs", note: "No expiration. Ever." },
-    { title: "One Hand-Written Letter", note: "Old-school. From the heart." },
+    {
+      title: "The Forever Help Promise",
+      note: "You can ask me for one help anytime in life, and if it’s possible for me, I’ll never say no."
+    },
+
+    {
+      title: "Your Special Day Wish",
+      note: "One day of your choice becomes completely your day — food, place, movie, trip, shopping, anything. I’ll just follow your plan."
+    },
+
+    {
+      title: "The Dream Gift Wish",
+      note: "Ask for one gift you truly want, and I’ll buy it for you with happiness."
+    },
+
+    {
+      title: "The One-Day Escape",
+      note: "We’ll plan a one-day trip outside Coimbatore and enjoy a peaceful adventure together."
+    },
+
+    {
+      title: "The Lifetime Presence Promise",
+      note: "No matter where life takes us, I’ll definitely be there for your marriage — this is my promise."
+    },
+
+    {
+      title: "The Unforgettable Bond",
+      note: "I will never forget you till the day I die, because some people become part of the heart forever."
+    }
   ],
   secretLetters: [
     {
@@ -59,7 +82,8 @@ export const birthdayConfig = {
       { title: "Last 7 Minutes", url: "/music/background song for each page/Last-7-Minutes-MassTamilan.dev.mp3" },
       { title: "Nallaru Po X Oorum Blood", url: "/music/background song for each page/Nallaru-Po-X-Oorum-Blood-Orchestral-Unplugged-MassTamilan.dev.mp3" },
       { title: "Please Don't Forget Me", url: "/music/background song for each page/Please-Don't-Forget-Me-MassTamilan.dev.mp3" },
-      { title: "The Metro Proposal", url: "/music/background song for each page/The-Metro-Proposal-MassTamilan.dev.mp3" }
+      { title: "The Metro Proposal", url: "/music/background song for each page/The-Metro-Proposal-MassTamilan.dev.mp3" },
+      { title: "Happy Birthday Background Score", url: "/music/background song for each page/vidssavecom-happy-birthday-background-score-256kbps_HEaR6Ise.mp3" }
     ],
     cassetteSongs: [
       { title: "Kannukulla (Reprise)", situation: "A beautiful reprise dedicated just for you", url: "/music/the three song/Kannukulla (Reprise).mp3" },

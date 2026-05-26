@@ -133,8 +133,8 @@ function BirthdayPage() {
       soundtrack: 1,
       gift: 0,
       promise: 0,
-      finale: 1,
-      gallery: 2,
+      finale: 5,
+      gallery: 3,
     };
 
     let observer: IntersectionObserver | null = null;
@@ -151,7 +151,7 @@ function BirthdayPage() {
         const visibleEntries = entries.filter((e) => e.isIntersecting);
         if (visibleEntries.length > 0) {
           const mainEntry = visibleEntries.reduce((max, entry) =>
-            entry.intersectionRatio > max.intersectionRatio ? entry : max
+            entry.intersectionRect.height > max.intersectionRect.height ? entry : max
             , visibleEntries[0]);
 
           const sceneId = mainEntry.target.id;
@@ -167,7 +167,7 @@ function BirthdayPage() {
       const observerOptions = {
         root: null,
         rootMargin: "-25% 0px -25% 0px",
-        threshold: 0.1,
+        threshold: 0.01,
       };
 
       observer = new IntersectionObserver(callback, observerOptions);
@@ -326,7 +326,7 @@ function SceneLanding({ onOpen }: { onOpen: () => void }) {
           transition={{ delay: 0.4, duration: 1 }}
           className="font-hand text-2xl text-[color:var(--gold)]"
         >
-          Pssst… come closer
+          Please wear headphones for better experience
         </motion.p>
 
         <motion.div
@@ -1592,7 +1592,7 @@ function SceneFinale() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-transition={{ duration: 1 }}
+          transition={{ duration: 1 }}
           className="mx-auto mt-12 max-w-2xl font-serif-soft text-2xl italic text-[color:var(--ivory)]/90 md:text-3xl"
         >
           {birthdayConfig.birthdayMessage}
@@ -1621,7 +1621,7 @@ function GalleryVideoCard({ src }: { src: string }) {
             if (outTimer.current) clearTimeout(outTimer.current);
             // Load src only when needed
             if (!activeSrc) setActiveSrc(src);
-            el.play().catch(() => {});
+            el.play().catch(() => { });
           } else {
             el.pause();
             // After 500ms out of viewport, clear src to release GPU memory
@@ -1724,7 +1724,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
         {birthdayConfig.galleryItems.map((item, i) => {
           const isItemVideo = item.type === "video";
           const ar = aspectRatios[item.url];
-          
+
           let spanClass = "col-span-1 row-span-1"; // default standard block
           if (ar) {
             if (ar < 0.8) {
@@ -1755,7 +1755,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 )}
-                
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4 z-10">
                   <div className="flex items-center gap-2 text-white">
                     <Heart className="h-4 w-4 fill-white text-white" />
@@ -1829,7 +1829,7 @@ function SceneGallery({ onVideoPlayStateChange }: SceneGalleryProps) {
                     {activeItem.url.split('/').pop()?.replace('_', ' #').replace('.mp4', '').replace('.jpg', '')}
                   </p>
                 </div>
-                
+
                 {/* Download / Save Button */}
                 <a
                   href={activeItem.url}
