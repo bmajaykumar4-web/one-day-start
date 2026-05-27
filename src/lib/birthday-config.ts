@@ -3,7 +3,7 @@ import memory12 from "@/photos/surprise/memory_12.jpg";
 import memory33 from "@/photos/friends/memory_33.jpg";
 import video143 from "@/photos/bog_making/video_143.mp4";
 import memory27 from "@/photos/surprise/memory_27.jpg";
-import heroChaiWebp from "@/photos/hero_chai/hero chai.jpg";
+import heroChaiWebp from "@/photos/hero_chai/hero_chai.jpg";
 import memory18 from "@/photos/friends/memory_18.jpg";
 
 // Personalize this file with her details ✨
